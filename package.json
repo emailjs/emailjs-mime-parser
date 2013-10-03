@@ -1,0 +1,9 @@
+{
+  "main": "mimeparser",
+  "volo": {
+    "dependencies": {
+      "easyevents": "github:Kreata/easyevents/v0.1.0",
+      "mimefuncs": "github:Kreata/mimefuncs/v0.1.2"
+    }
+  }
+}
