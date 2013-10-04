@@ -6,27 +6,27 @@ require(["mimeparser"], function(mimeparser) {
             input = document.getElementById("in").value,
             i, len, chr, buf, bytes;
 
-        parser.on("header", function(node){
+        parser.onheader = function(node){
             var title = "HEADERS" + (node.path.length ? " for part nr. " + node.path.join(".") : "");
                 str = "\n\n" + title + "\n" + Array(title.length + 1).join("-") + "\n" + node.header.join("\n");
             if(node.path.length){
                 str = str.replace(/^/mg, Array(node.path.length + 1).join("    "));
             }
             log(str);
-        });
+        };
 
-        parser.on("body", function(node, chunk){
+        parser.onbody = function(node, chunk){
             var title = "BODYCHUNK" + (node.path.length ? " for part nr. " + node.path.join(".") : ""),
                 str = "\n\n" + title + "\n" + Array(title.length + 1).join("-") + "\n" + String.fromCharCode.apply(String, chunk);
             if(node.path.length){
                 str = str.replace(/^/mg, Array(node.path.length + 2).join("    "));
             }
             log(str);
-        });
+        };
 
-        parser.on("end", function(){
+        parser.onend = function(){
             log("\n\n----\nDONE");
-        });
+        };
 
         // convert to "binary"
         input = encodeURIComponent(input).replace(/%([a-f0-9]{2})/gi, function(o, code){
