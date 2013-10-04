@@ -2,9 +2,9 @@
 require(["mimeparser"], function(mimeparser) {
     window.parse = function(){
 
-        var parser = mimeparser({chunkSize: Number(document.getElementById("chunksize").value) || 1024}),
+        var parser = mimeparser({chunkSize: Math.min(Math.abs(Number(document.getElementById("chunksize").value) || 1024), 128 * 1024)}),
             input = document.getElementById("in").value,
-            inputSize = Number(document.getElementById("inputsize").value) || 1,
+            inputSize = Math.min(Math.abs(Number(document.getElementById("inputsize").value) || 1), 128 * 1024),
             i, len, chr, buf, bytes;
 
         parser.onheader = function(node){
