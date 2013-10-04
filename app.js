@@ -4,6 +4,7 @@ require(["mimeparser"], function(mimeparser) {
 
         var parser = mimeparser({chunkSize: Number(document.getElementById("chunksize").value) || 1024}),
             input = document.getElementById("in").value,
+            inputSize = Number(document.getElementById("inputsize").value) || 1,
             i, len, chr, buf, bytes;
 
         parser.onheader = function(node){
@@ -35,17 +36,18 @@ require(["mimeparser"], function(mimeparser) {
 
         var pos = 0;
 
-        function writeByte(){
+        function writeBytes(){
             if(pos >= input.length){
                 return parser.end();
             }
-            chr = encodeURIComponent(input.charCodeAt(pos++));
-            buf = new Uint8Array([chr]);
-            parser.write(buf);
-            setTimeout(writeByte, 1);
+            var str = input.substr(pos, inputSize);
+            pos += str.length;
+            
+            parser.write(str);
+            setTimeout(writeBytes, 1);
         }
         log("START");
-        writeByte();
+        writeBytes();
     }
 });
 

@@ -608,10 +608,11 @@ OBIytsIYEoiEl0lqFWgKM4zkUJzjWQwJADs=
 </textarea></p>
 
     <p>Max body chunk size in bytes: <input type="text" id="chunksize" value="255" /></p>
+    <p>Input chunk size: <input type="text" id="inputsize" value="1" /></p>
 
     <p><button onclick="parse();">Parse</button></p>
 
-    <p>Input text is "streamed" to the parser one byte at the time with a small delay between the bytes. So it might take a few seconds until you see something. "DONE" indicates that the input is fully streamed and parsed.</p>
+    <p>Input text is "streamed" to the parser set count of bytes at the time, so it might take a few seconds until you see something if "Input chunk size" value is very small. "DONE" indicates that the input is fully streamed and parsed.</p>
 
     <pre id="log"></pre>
 </body>
