@@ -24,7 +24,7 @@
 
     if (typeof define === 'function' && define.amd) {
         define([
-            "mimefuncs"
+            "../mimefuncs"
             ], factory);
     } else {
         root.mimeparser = factory(mimefuncs);

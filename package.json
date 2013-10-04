@@ -1,6 +1,7 @@
 {
   "main": "mimeparser",
   "volo": {
+    "baseDir": "deps",
     "dependencies": {
       "mimefuncs": "github:Kreata/mimefuncs/v0.1.3"
     }

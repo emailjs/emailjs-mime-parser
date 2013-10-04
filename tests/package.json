@@ -1,0 +1,8 @@
+{
+  "volo": {
+    "baseDir": "lib",
+    "dependencies": {
+      "firemail": "github:Kreata/mimeparser/master"
+    }
+  }
+}
