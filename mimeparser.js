@@ -316,6 +316,8 @@
      * Parses Content-Type value and selects following actions.
      */
     MimeNode.prototype._processContentType = function(){
+        var contentDisposition;
+
         this.contentType = mimefuncs.parseHeaderValue(
             this.headers["content-type"] && this.headers["content-type"][0] || "text/plain");
         this.contentType.value = (this.contentType.value || "").toLowerCase().trim();
@@ -328,10 +330,18 @@
         }
 
         if(this.contentType.value == "message/rfc822"){
-            this._childNodes = [];
-            this._currentChild = new MimeNode(this, this._parser);
-            this._childNodes.push(this._currentChild);
-            this._isRfc822 = true;
+            /**
+             * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
+             * otherwise treat it like a regular attachment
+             */
+            contentDisposition = mimefuncs.parseHeaderValue(
+                this.headers["content-disposition"] && this.headers["content-disposition"][0] || "");
+            if((contentDisposition.value || "").toLowerCase().trim() != "attachment"){
+                this._childNodes = [];
+                this._currentChild = new MimeNode(this, this._parser);
+                this._childNodes.push(this._currentChild);
+                this._isRfc822 = true;
+            }
         }
     };
 

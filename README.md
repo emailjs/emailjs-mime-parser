@@ -71,6 +71,8 @@ parser.onend = function(){
 
 This seems like asynchronous but actually it is not. So always define `onheader`, `onbody` and `onend` before writing the first chunk of data to the parser.
 
+**message/rfc822** is automatically parsed if the mime part does not have a `Content-Disposition: attachment` header, otherwise it will be emitted as a regular attachment (as one long ArrayBuffer value).
+
 ## License
 
 **MIT**
