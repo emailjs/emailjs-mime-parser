@@ -1,8 +1,6 @@
 # mimeparser
 
-Another prototype for parsing mime streams, see [live demo here](http://tahvel.info/mimeparser/parse.html).
-
-Run `volo install` to install the required dependencies before trying out the demo file by yourself.
+Another prototype for parsing mime streams, see [example here](https://github.com/Kreata/mimeparser-example).
 
 ## Scope
 
