@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <link href="../node_modules/mocha/mocha.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="mocha"></div>
+    
+    <!-- phantomjs polyfill for ArrayBuffer.slice -->
+    <script src="../node_modules/arraybuffer-slice/index.js"></script>
+
+    <!-- polyfill for TextEncoder/TextDecoder -->
+    <script src="../node_modules/stringencoding/encoding-indexes.js"></script>
+    <script src="../node_modules/stringencoding/encoding.js"></script>
+
+    <script src="../node_modules/mocha/mocha.js"></script>
+    <script data-main="index.js" src="../node_modules/requirejs/require.js"></script>
+</body>
+</html>

@@ -15,23 +15,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// AMD shim
-/* jshint browser: true, nonstandard: true, strict: true */
-/* global define: false, mimefuncs: false */
 (function(root, factory) {
-
-    "use strict";
+    'use strict';
 
     if (typeof define === 'function' && define.amd) {
-        define([
-            "../mimefuncs"
-            ], factory);
+        define(['mimefuncs'], factory);
     } else {
-        root.mimeparser = factory(mimefuncs);
+        root.MimeParser = factory(mimefuncs);
     }
 }(this, function(mimefuncs) {
-
-    "use strict";
+    'use strict';
 
     /**
      * Creates a parser for a mime stream
@@ -40,7 +33,7 @@
      * @param {Object} [options] Optional options object
      * @param {Number} [options.chunkSize=65536] Maximum size of a body chunk to be emitted
      */
-    function MimeParser(options){
+    function MimeParser(options) {
         options = options || {};
 
         /**
@@ -67,25 +60,25 @@
          * Data is written to nodes one line at the time. If entire line
          * is not received yet, buffer it before passing on
          */
-        this._remainder = "";
+        this._remainder = '';
     }
 
     /**
      * Writes a chunk of data to the processing queue. Splits data to lines and feeds
      * complete lines to the current node element
      *
-     * @param {ArrayBuffer|String} chunk Chunk to be processed. Either an ArrayBuffer value or a "binary" string
+     * @param {ArrayBuffer|String} chunk Chunk to be processed. Either an ArrayBuffer value or a 'binary' string
      */
-    MimeParser.prototype.write = function(chunk){
-        if(!chunk || !chunk.length){
+    MimeParser.prototype.write = function(chunk) {
+        if (!chunk || !chunk.length) {
             return !this.running;
         }
 
-        var lines = (this._remainder + (typeof chunk == "object" ?
+        var lines = (this._remainder + (typeof chunk === 'object' ?
             mimefuncs.fromArrayBuffer(chunk) : chunk)).split(/\r?\n/g);
         this._remainder = lines.pop();
 
-        for(var i=0, len = lines.length; i < len; i++){
+        for (var i = 0, len = lines.length; i < len; i++) {
             this.node.writeLine(lines[i]);
         }
 
@@ -97,16 +90,16 @@
      *
      * @param {ArrayBuffer|String} [chunk] Final chunk to be processed
      */
-    MimeParser.prototype.end = function(chunk){
-        if(chunk && chunk.length){
+    MimeParser.prototype.end = function(chunk) {
+        if (chunk && chunk.length) {
             this.write(chunk);
         }
 
-        if(this._remainder.length){
+        if (this._remainder.length) {
             this.node.writeLine(this._remainder);
         }
 
-        if(this.node){
+        if (this.node) {
             this.node.finalize();
         }
 
@@ -116,12 +109,12 @@
     /**
      * Retrieves a mime part object for specified path
      *
-     *   parser.getNode("1.2.3")
+     *   parser.getNode('1.2.3')
      *
      * @param {String} path Path to the node
      */
-    MimeParser.prototype.getNode = function(path){
-        return this.nodes["node" + path] || null;
+    MimeParser.prototype.getNode = function(path) {
+        return this.nodes['node' + path] || null;
     };
 
     // PARSER EVENTS
@@ -131,7 +124,7 @@
      * Called when the parsing is ended
      * @event
      */
-    MimeParser.prototype.onend = function(){};
+    MimeParser.prototype.onend = function() {};
 
     /**
      * Override this function.
@@ -139,7 +132,7 @@
      * @event
      * @param {Object} node Current mime part. See node.header for header lines
      */
-    MimeParser.prototype.onheader = function(){};
+    MimeParser.prototype.onheader = function() {};
 
     /**
      * Override this function.
@@ -148,7 +141,7 @@
      * @param {Object} node Current mime part
      * @param {ArrayBuffer} chunk Body chunk
      */
-    MimeParser.prototype.onbody = function(){};
+    MimeParser.prototype.onbody = function() {};
 
     // NODE PROCESSING
 
@@ -159,7 +152,7 @@
      * @param {Object} parentNode Reference to the parent element. If not specified, then this is root node
      * @param {Object} parser MimeParser object
      */
-    function MimeNode(parentNode, parser){
+    function MimeNode(parentNode, parser) {
 
         // Public properties
 
@@ -181,7 +174,7 @@
         // Private properties
 
         /**
-         * Reference to the "master" parser object
+         * Reference to the 'master' parser object
          */
         this._parser = parser;
 
@@ -193,12 +186,12 @@
         /**
          * Current state, always starts out with HEADER
          */
-        this._state = "HEADER";
+        this._state = 'HEADER';
 
         /**
          * Body buffer. Should never be longer than chunkSize
          */
-        this._bodyBuffer = "";
+        this._bodyBuffer = '';
 
         /**
          * Line counter bor the body part
@@ -219,7 +212,7 @@
         /**
          * Remainder string when dealing with base64 and qp values
          */
-        this._lineRemainder = "";
+        this._lineRemainder = '';
 
         /**
          * Indicates if this is a multipart node
@@ -237,7 +230,7 @@
         this._isRfc822 = false;
 
         // Att this node to the path cache
-        this._parser.nodes["node" + this.path.join(".")] = this;
+        this._parser.nodes['node' + this.path.join('.')] = this;
     }
 
     // Public methods
@@ -245,12 +238,12 @@
     /**
      * Processes an enitre input line
      *
-     * @param {String} line Entire input line as "binary" string
+     * @param {String} line Entire input line as 'binary' string
      */
-    MimeNode.prototype.writeLine = function(line){
-        if(this._state == "HEADER"){
+    MimeNode.prototype.writeLine = function(line) {
+        if (this._state === 'HEADER') {
             this._processHeaderLine(line);
-        }else if(this._state == "BODY"){
+        } else if (this._state === 'BODY') {
             this._processBodyLine(line);
         }
     };
@@ -258,10 +251,10 @@
     /**
      * Processes any remainders
      */
-    MimeNode.prototype.finalize = function(){
-        if(this._isRfc822){
+    MimeNode.prototype.finalize = function() {
+        if (this._isRfc822) {
             this._currentChild.finalize();
-        }else{
+        } else {
             this._emitBody(true);
         }
     };
@@ -271,19 +264,19 @@
     /**
      * Processes a line in the HEADER state. It the line is empty, change state to BODY
      *
-     * @param {String} line Entire input line as "binary" string
+     * @param {String} line Entire input line as 'binary' string
      */
-    MimeNode.prototype._processHeaderLine = function(line){
-        if(!line){
+    MimeNode.prototype._processHeaderLine = function(line) {
+        if (!line) {
             this._parseHeaders();
             this._parser.onheader(this);
-            this._state = "BODY";
+            this._state = 'BODY';
             return;
         }
 
-        if(line.match(/^\s/) && this.header.length){
-            this.header[this.header.length - 1] += "\n" + line;
-        }else{
+        if (line.match(/^\s/) && this.header.length) {
+            this.header[this.header.length - 1] += '\n' + line;
+        } else {
             this.header.push(line);
         }
     };
@@ -291,19 +284,19 @@
     /**
      * Joins folded header lines and calls Content-Type and Transfer-Encoding processors
      */
-    MimeNode.prototype._parseHeaders = function(){
+    MimeNode.prototype._parseHeaders = function() {
 
         // Join header lines
         var key, value;
 
-        for(var i=0, len = this.header.length; i < len; i++){
-            value = this.header[i].split(":");
-            key = (value.shift() || "").trim().toLowerCase();
-            value = (value.join(":") || "").replace(/\n/g, "").trim();
+        for (var i = 0, len = this.header.length; i < len; i++) {
+            value = this.header[i].split(':');
+            key = (value.shift() || '').trim().toLowerCase();
+            value = (value.join(':') || '').replace(/\n/g, '').trim();
 
-            if(!this.headers[key]){
+            if (!this.headers[key]) {
                 this.headers[key] = [value];
-            }else{
+            } else {
                 this.headers[key].push(value);
             }
         }
@@ -315,28 +308,28 @@
     /**
      * Parses Content-Type value and selects following actions.
      */
-    MimeNode.prototype._processContentType = function(){
+    MimeNode.prototype._processContentType = function() {
         var contentDisposition;
 
         this.contentType = mimefuncs.parseHeaderValue(
-            this.headers["content-type"] && this.headers["content-type"][0] || "text/plain");
-        this.contentType.value = (this.contentType.value || "").toLowerCase().trim();
-        this.contentType.type = (this.contentType.value.split("/").shift() || "text");
+            this.headers['content-type'] && this.headers['content-type'][0] || 'text/plain');
+        this.contentType.value = (this.contentType.value || '').toLowerCase().trim();
+        this.contentType.type = (this.contentType.value.split('/').shift() || 'text');
 
-        if(this.contentType.type == "multipart" && this.contentType.params.boundary){
+        if (this.contentType.type === 'multipart' && this.contentType.params.boundary) {
             this._childNodes = [];
-            this._isMultipart = (this.contentType.value.split("/").pop() || "mixed");
+            this._isMultipart = (this.contentType.value.split('/').pop() || 'mixed');
             this._multipartBoundary = this.contentType.params.boundary;
         }
 
-        if(this.contentType.value == "message/rfc822"){
+        if (this.contentType.value === 'message/rfc822') {
             /**
              * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
              * otherwise treat it like a regular attachment
              */
             contentDisposition = mimefuncs.parseHeaderValue(
-                this.headers["content-disposition"] && this.headers["content-disposition"][0] || "");
-            if((contentDisposition.value || "").toLowerCase().trim() != "attachment"){
+                this.headers['content-disposition'] && this.headers['content-disposition'][0] || '');
+            if ((contentDisposition.value || '').toLowerCase().trim() !== 'attachment') {
                 this._childNodes = [];
                 this._currentChild = new MimeNode(this, this._parser);
                 this._childNodes.push(this._currentChild);
@@ -349,74 +342,74 @@
      * Parses Content-Trasnfer-Encoding value to see if the body needs to be converted
      * before it can be emitted
      */
-    MimeNode.prototype._processContentTransferEncoding = function(){
+    MimeNode.prototype._processContentTransferEncoding = function() {
         this.contentTransferEncoding = mimefuncs.parseHeaderValue(
-            this.headers["content-transfer-encoding"] && this.headers["content-transfer-encoding"][0] || "7bit");
-        this.contentTransferEncoding.value = (this.contentTransferEncoding.value || "").toLowerCase().trim();
+            this.headers['content-transfer-encoding'] && this.headers['content-transfer-encoding'][0] || '7bit');
+        this.contentTransferEncoding.value = (this.contentTransferEncoding.value || '').toLowerCase().trim();
     };
 
     /**
      * Processes a line in the BODY state. If this is a multipart or rfc822 node,
      * passes line value to child nodes.
      *
-     * @param {String} line Entire input line as "binary" string
+     * @param {String} line Entire input line as 'binary' string
      */
-    MimeNode.prototype._processBodyLine = function(line){
+    MimeNode.prototype._processBodyLine = function(line) {
         var curLine, match;
 
         this._lineCount++;
 
-        if(this._isMultipart){
-            if(line == "--" + this._multipartBoundary){
-                if(this._currentChild){
+        if (this._isMultipart) {
+            if (line === '--' + this._multipartBoundary) {
+                if (this._currentChild) {
                     this._currentChild.finalize();
                 }
                 this._currentChild = new MimeNode(this, this._parser);
                 this._childNodes.push(this._currentChild);
-            }else if(line == "--" + this._multipartBoundary + "--"){
-                if(this._currentChild){
+            } else if (line === '--' + this._multipartBoundary + '--') {
+                if (this._currentChild) {
                     this._currentChild.finalize();
                 }
                 this._currentChild = false;
-            }else if(this._currentChild){
+            } else if (this._currentChild) {
                 this._currentChild.writeLine(line);
-            }else{
+            } else {
                 // Ignore body for multipart
             }
-        }else if(this._isRfc822){
+        } else if (this._isRfc822) {
             this._currentChild.writeLine(line);
-        }else{
-            switch(this.contentTransferEncoding.value){
-                case "base64":
+        } else {
+            switch (this.contentTransferEncoding.value) {
+                case 'base64':
                     curLine = this._lineRemainder + line.trim();
 
-                    if(curLine.length % 4){
-                        this._lineRemainder = curLine.substr(- curLine.length % 4);
+                    if (curLine.length % 4) {
+                        this._lineRemainder = curLine.substr(-curLine.length % 4);
                         curLine = curLine.substr(0, curLine.length - this._lineRemainder.length);
-                    }else{
-                        this._lineRemainder = "";
+                    } else {
+                        this._lineRemainder = '';
                     }
 
-                    if(curLine.length){
+                    if (curLine.length) {
                         this._bodyBuffer += mimefuncs.fromArrayBuffer(mimefuncs.base64.decode(curLine));
                     }
 
                     break;
-                case "quoted-printable":
-                    curLine = this._lineRemainder + (this._lineCount > 1 ? "\n" : "") + line;
-                    if((match = curLine.match(/=[a-f0-9]{0,1}$/i))){
+                case 'quoted-printable':
+                    curLine = this._lineRemainder + (this._lineCount > 1 ? '\n' : '') + line;
+                    if ((match = curLine.match(/=[a-f0-9]{0,1}$/i))) {
                         this._lineRemainder = match[0];
                         curLine = curLine.substr(0, curLine.length - this._lineRemainder.length);
                     }
 
-                    this._bodyBuffer += curLine.replace(/=([a-f0-9]{2})/ig, function(m, code){
+                    this._bodyBuffer += curLine.replace(/=([a-f0-9]{2})/ig, function(m, code) {
                         return String.fromCharCode(parseInt(code, 16));
                     });
                     break;
-                // case "7bit":
-                // case "8bit":
+                    // case '7bit':
+                    // case '8bit':
                 default:
-                    this._bodyBuffer += (this._lineCount > 1 ? "\n" : "") + line;
+                    this._bodyBuffer += (this._lineCount > 1 ? '\n' : '') + line;
                     break;
             }
             this._emitBody();
@@ -428,22 +421,19 @@
      *
      * @param {Boolean} forceEmit If set to true does not keep any remainders
      */
-    MimeNode.prototype._emitBody = function(forceEmit){
-        var emitStr = "";
+    MimeNode.prototype._emitBody = function(forceEmit) {
+        var emitStr = '';
 
-        if(this._state != "BODY" || this._isMultipart || !this._bodyBuffer){
+        if (this._state !== 'BODY' || this._isMultipart || !this._bodyBuffer) {
             return;
         }
 
-        if(forceEmit || this._bodyBuffer.length >= this._parser.chunkSize){
+        if (forceEmit || this._bodyBuffer.length >= this._parser.chunkSize) {
             emitStr = this._bodyBuffer.substr(0, this._parser.chunkSize);
             this._bodyBuffer = this._bodyBuffer.substr(emitStr.length);
             this._parser.onbody(this, mimefuncs.toArrayBuffer(emitStr));
         }
     };
 
-    // Exposes to the world
-    return function(options){
-        return new MimeParser(options);
-    };
+    return MimeParser;
 }));
