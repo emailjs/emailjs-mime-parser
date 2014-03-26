@@ -26,7 +26,7 @@
         "mocha": "~1.16.2",
         "phantomjs": "~1.9.7-1",
         "requirejs": "~2.1.10",
-        "stringencoding": "https://github.com/whiteout-io/stringencoding/tarball/v0.1.0",
+        "stringencoding": "https://github.com/whiteout-io/stringencoding/tarball/umd",
         "arraybuffer-slice": "0.0.2"
     },
     "volo": {}
