@@ -33,17 +33,8 @@
      * Creates a parser for a mime stream
      *
      * @constructor
-     * @param {Object} [options] Optional options object
-     * @param {Number} [options.chunkSize=65536] Maximum size of a body chunk to be emitted
      */
-    function MimeParser(options) {
-        options = options || {};
-
-        /**
-         * Maximum size of a body chunk to be emitted
-         */
-        this.chunkSize = options.chunkSize || 64 * 1024;
-
+    function MimeParser() {
         /**
          * Returned to the write calls
          */
@@ -415,7 +406,6 @@
                     this._bodyBuffer += (this._lineCount > 1 ? '\n' : '') + line;
                     break;
             }
-            this._emitBody();
         }
     };
 
@@ -424,18 +414,14 @@
      *
      * @param {Boolean} forceEmit If set to true does not keep any remainders
      */
-    MimeNode.prototype._emitBody = function(forceEmit) {
-        var emitStr = '';
-
-        if (this._state !== 'BODY' || this._isMultipart || !this._bodyBuffer) {
+    MimeNode.prototype._emitBody = function() {
+        if (this._isMultipart || !this._bodyBuffer) {
             return;
         }
 
-        if (forceEmit || this._bodyBuffer.length >= this._parser.chunkSize) {
-            emitStr = this._bodyBuffer.substr(0, this._parser.chunkSize);
-            this._bodyBuffer = this._bodyBuffer.substr(emitStr.length);
-            this._parser.onbody(this, mimefuncs.toArrayBuffer(emitStr));
-        }
+        this.content = mimefuncs.toArrayBuffer(this._bodyBuffer);
+        this._bodyBuffer = '';
+        this._parser.onbody(this, this.content);
     };
 
     return MimeParser;
