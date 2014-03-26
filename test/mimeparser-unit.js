@@ -28,8 +28,14 @@ define(['chai', 'mimeparser'], function(chai, Mimeparser) {
                     expect(new TextDecoder('utf-8').decode(chunk)).to.equal('Hello world!');
                 };
 
-                parser.onend = done;
-                parser.end(fixture);
+                parser.onend = function() {
+                    expect(parser.nodes).to.not.be.empty;
+                    expect(new TextDecoder('utf-8').decode(parser.nodes.node.content)).to.equal('Hello world!');
+
+                    done();
+                };
+                parser.write(fixture);
+                parser.end();
             });
         });
     });
