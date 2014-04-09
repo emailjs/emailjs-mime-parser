@@ -1,11 +1,12 @@
 'use strict';
 
 require.config({
-    baseUrl: '../src',
+    baseUrl: '../',
     paths: {
         'test': '../test',
         'chai': '../node_modules/chai/chai',
-        'mimefuncs': '../node_modules/mimefuncs/src/mimefuncs'
+        'mimefuncs': '../node_modules/mimefuncs/src/mimefuncs',
+        'stringencoding': '../node_modules/stringencoding/dist/stringencoding'
     }
 });
 
