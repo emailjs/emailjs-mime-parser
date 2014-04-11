@@ -27,7 +27,6 @@
     "grunt-contrib-connect": "~0.6.0",
     "grunt-contrib-jshint": "~0.8.0",
     "mocha": "~1.16.2",
-    "phantomjs": "~1.9.7-1",
     "requirejs": "~2.1.10",
     "stringencoding": "https://github.com/whiteout-io/stringencoding/tarball/v0.1.0",
     "arraybuffer-slice": "0.0.2",

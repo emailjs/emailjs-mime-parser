@@ -22,14 +22,11 @@
     'use strict';
 
     if (typeof define === 'function' && define.amd) {
-        define(['mimefuncs', 'addressparser'], function(mimefuncs, addressparser) {
-            return factory(mimefuncs, addressparser);
-        });
+        define(['mimefuncs', 'addressparser'], factory);
     } else if (typeof exports === 'object') {
         module.exports = factory(require('mimefuncs'), require('addressparser'));
     } else {
-        root.mimefuncs = factory(root.mimefuncs);
-        root.addressparser = factory(root.addressparser);
+        root.mimefuncs = factory(root.mimefuncs, root.addressparser);
     }
 
 }(this, function(mimefuncs, addressparser) {
