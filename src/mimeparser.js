@@ -26,7 +26,7 @@
     } else if (typeof exports === 'object') {
         module.exports = factory(require('mimefuncs'), require('addressparser'));
     } else {
-        root.mimefuncs = factory(root.mimefuncs, root.addressparser);
+        root.MimeParser = factory(root.mimefuncs, root.addressparser);
     }
 
 }(this, function(mimefuncs, addressparser) {
