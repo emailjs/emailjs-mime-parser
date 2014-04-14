@@ -22,28 +22,22 @@
     'use strict';
 
     if (typeof define === 'function' && define.amd) {
-        define(['mimefuncs'], factory);
+        define(['mimefuncs', 'addressparser'], factory);
+    } else if (typeof exports === 'object') {
+        module.exports = factory(require('mimefuncs'), require('addressparser'));
     } else {
-        root.MimeParser = factory(mimefuncs);
+        root.MimeParser = factory(root.mimefuncs, root.addressparser);
     }
-}(this, function(mimefuncs) {
+
+}(this, function(mimefuncs, addressparser) {
     'use strict';
 
     /**
      * Creates a parser for a mime stream
      *
      * @constructor
-     * @param {Object} [options] Optional options object
-     * @param {Number} [options.chunkSize=65536] Maximum size of a body chunk to be emitted
      */
-    function MimeParser(options) {
-        options = options || {};
-
-        /**
-         * Maximum size of a body chunk to be emitted
-         */
-        this.chunkSize = options.chunkSize || 64 * 1024;
-
+    function MimeParser() {
         /**
          * Returned to the write calls
          */
@@ -98,7 +92,7 @@
             this.write(chunk);
         }
 
-        if (this._remainder.length) {
+        if (this.node._lineCount) {
             this.node.writeLine(this._remainder);
         }
 
@@ -298,9 +292,9 @@
             value = (value.join(':') || '').replace(/\n/g, '').trim();
 
             if (!this.headers[key]) {
-                this.headers[key] = [value];
+                this.headers[key] = [this._parseHeaderValue(key, value)];
             } else {
-                this.headers[key].push(value);
+                this.headers[key].push(this._parseHeaderValue(key, value));
             }
         }
 
@@ -309,13 +303,51 @@
     };
 
     /**
+     * Parses single header value
+     * @param {String} key Header key
+     * @param {String} value Value for the key
+     * @return {Object} parsed header
+     */
+    MimeNode.prototype._parseHeaderValue = function(key, value) {
+        var parsedValue;
+        switch (key) {
+            case 'content-type':
+            case 'content-transfer-encoding':
+            case 'content-disposition':
+            case 'dkim-signature':
+                parsedValue = mimefuncs.parseHeaderValue(value);
+                break;
+            case 'from':
+            case 'sender':
+            case 'to':
+            case 'reply-to':
+            case 'cc':
+            case 'bcc':
+            case 'abuse-reports-to':
+            case 'errors-to':
+            case 'return-path':
+            case 'delivered-to':
+                parsedValue = {
+                    value: addressparser.parse(value)
+                };
+                break;
+            default:
+                parsedValue = {
+                    value: value
+                };
+        }
+        parsedValue.initial = value;
+        return parsedValue;
+    };
+
+    /**
      * Parses Content-Type value and selects following actions.
      */
     MimeNode.prototype._processContentType = function() {
         var contentDisposition;
 
-        this.contentType = mimefuncs.parseHeaderValue(
-            this.headers['content-type'] && this.headers['content-type'][0] || 'text/plain');
+        this.contentType = this.headers['content-type'] && this.headers['content-type'][0] ||
+            mimefuncs.parseHeaderValue('text/plain');
         this.contentType.value = (this.contentType.value || '').toLowerCase().trim();
         this.contentType.type = (this.contentType.value.split('/').shift() || 'text');
 
@@ -330,8 +362,8 @@
              * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
              * otherwise treat it like a regular attachment
              */
-            contentDisposition = mimefuncs.parseHeaderValue(
-                this.headers['content-disposition'] && this.headers['content-disposition'][0] || '');
+            contentDisposition = this.headers['content-disposition'] && this.headers['content-disposition'][0] ||
+                mimefuncs.parseHeaderValue('');
             if ((contentDisposition.value || '').toLowerCase().trim() !== 'attachment') {
                 this._childNodes = [];
                 this._currentChild = new MimeNode(this, this._parser);
@@ -346,8 +378,8 @@
      * before it can be emitted
      */
     MimeNode.prototype._processContentTransferEncoding = function() {
-        this.contentTransferEncoding = mimefuncs.parseHeaderValue(
-            this.headers['content-transfer-encoding'] && this.headers['content-transfer-encoding'][0] || '7bit');
+        this.contentTransferEncoding = this.headers['content-transfer-encoding'] && this.headers['content-transfer-encoding'][0] ||
+            mimefuncs.parseHeaderValue('7bit');
         this.contentTransferEncoding.value = (this.contentTransferEncoding.value || '').toLowerCase().trim();
     };
 
@@ -400,12 +432,15 @@
                     break;
                 case 'quoted-printable':
                     curLine = this._lineRemainder + (this._lineCount > 1 ? '\n' : '') + line;
+
                     if ((match = curLine.match(/=[a-f0-9]{0,1}$/i))) {
                         this._lineRemainder = match[0];
                         curLine = curLine.substr(0, curLine.length - this._lineRemainder.length);
+                    } else {
+                        this._lineRemainder = '';
                     }
 
-                    this._bodyBuffer += curLine.replace(/=([a-f0-9]{2})/ig, function(m, code) {
+                    this._bodyBuffer += curLine.replace(/\=(\r?\n|$)/g, '').replace(/=([a-f0-9]{2})/ig, function(m, code) {
                         return String.fromCharCode(parseInt(code, 16));
                     });
                     break;
@@ -415,7 +450,6 @@
                     this._bodyBuffer += (this._lineCount > 1 ? '\n' : '') + line;
                     break;
             }
-            this._emitBody();
         }
     };
 
@@ -424,18 +458,13 @@
      *
      * @param {Boolean} forceEmit If set to true does not keep any remainders
      */
-    MimeNode.prototype._emitBody = function(forceEmit) {
-        var emitStr = '';
-
-        if (this._state !== 'BODY' || this._isMultipart || !this._bodyBuffer) {
+    MimeNode.prototype._emitBody = function() {
+        if (this._isMultipart || !this._bodyBuffer) {
             return;
         }
-
-        if (forceEmit || this._bodyBuffer.length >= this._parser.chunkSize) {
-            emitStr = this._bodyBuffer.substr(0, this._parser.chunkSize);
-            this._bodyBuffer = this._bodyBuffer.substr(emitStr.length);
-            this._parser.onbody(this, mimefuncs.toArrayBuffer(emitStr));
-        }
+        this.content = mimefuncs.toArrayBuffer(this._bodyBuffer);
+        this._bodyBuffer = '';
+        this._parser.onbody(this, this.content);
     };
 
     return MimeParser;
