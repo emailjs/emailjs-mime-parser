@@ -17,7 +17,7 @@
   },
   "main": "src/mimeparser",
   "dependencies": {
-    "mimefuncs": "https://github.com/whiteout-io/mimefuncs/tarball/v0.2.0",
+    "mimefuncs": "https://github.com/whiteout-io/mimefuncs/tarball/v0.2.1",
     "addressparser": "https://github.com/whiteout-io/addressparser/tarball/v0.1.2"
   },
   "devDependencies": {

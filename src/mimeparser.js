@@ -92,7 +92,7 @@
             this.write(chunk);
         }
 
-        if (this.node._lineCount) {
+        if (this.node._lineCount || this._remainder) {
             this.node.writeLine(this._remainder);
         }
 
@@ -186,7 +186,7 @@
         this._state = 'HEADER';
 
         /**
-         * Body buffer. Should never be longer than chunkSize
+         * Body buffer
          */
         this._bodyBuffer = '';
 
@@ -284,17 +284,36 @@
     MimeNode.prototype._parseHeaders = function() {
 
         // Join header lines
-        var key, value;
+        var key, value, hasBinary;
 
         for (var i = 0, len = this.header.length; i < len; i++) {
             value = this.header[i].split(':');
             key = (value.shift() || '').trim().toLowerCase();
             value = (value.join(':') || '').replace(/\n/g, '').trim();
 
+            if (value.match(/[\u0080-\uFFFF]/)) {
+                if (!this.charset) {
+                    hasBinary = true;
+                }
+                // use default charset at first and if the actual charset is resolved, the conversion is re-run
+                value = mimefuncs.charset.decode(mimefuncs.charset.convert(mimefuncs.toArrayBuffer(value), this.charset || 'iso-8859-1'));
+            }
+
             if (!this.headers[key]) {
                 this.headers[key] = [this._parseHeaderValue(key, value)];
             } else {
                 this.headers[key].push(this._parseHeaderValue(key, value));
+            }
+
+            if (!this.charset && key === 'content-type') {
+                this.charset = this.headers[key][this.headers[key].length - 1].params.charset;
+            }
+
+            if (hasBinary && this.charset) {
+                // reset values and start over once charset has been resolved and 8bit content has been found
+                hasBinary = false;
+                this.headers = {};
+                i = -1; // next iteration has i == 0
             }
         }
 
@@ -309,7 +328,8 @@
      * @return {Object} parsed header
      */
     MimeNode.prototype._parseHeaderValue = function(key, value) {
-        var parsedValue;
+        var parsedValue, isAddress = false;
+
         switch (key) {
             case 'content-type':
             case 'content-transfer-encoding':
@@ -327,8 +347,9 @@
             case 'errors-to':
             case 'return-path':
             case 'delivered-to':
+                isAddress = true;
                 parsedValue = {
-                    value: addressparser.parse(value)
+                    value: [].concat(addressparser.parse(value) || [])
                 };
                 break;
             default:
@@ -337,7 +358,44 @@
                 };
         }
         parsedValue.initial = value;
+
+        this._decodeHeaderCharset(parsedValue, {
+            isAddress: isAddress
+        });
+
         return parsedValue;
+    };
+
+    MimeNode.prototype._decodeHeaderCharset = function(parsed, options) {
+        options = options || {};
+
+        // decode default value
+        if (typeof parsed.value === 'string') {
+            parsed.value = mimefuncs.mimeWordsDecode(parsed.value);
+        }
+
+        // decode possible params
+        Object.keys(parsed.params || {}).forEach(function(key) {
+            if (typeof parsed.params[key] === 'string') {
+                parsed.params[key] = mimefuncs.mimeWordsDecode(parsed.params[key]);
+            }
+        });
+
+        // decode addresses
+        if (options.isAddress && Array.isArray(parsed.value)) {
+            parsed.value.forEach(function(addr) {
+                if (addr.name) {
+                    addr.name = mimefuncs.mimeWordsDecode(addr.name);
+                    if (Array.isArray(addr.group)) {
+                        this._decodeHeaderCharset({
+                            value: addr.group
+                        }, {
+                            isAddress: true
+                        });
+                    }
+                }
+            }.bind(this));
+        }
     };
 
     /**
@@ -350,6 +408,10 @@
             mimefuncs.parseHeaderValue('text/plain');
         this.contentType.value = (this.contentType.value || '').toLowerCase().trim();
         this.contentType.type = (this.contentType.value.split('/').shift() || 'text');
+
+        if (this.contentType.params && this.contentType.params.charset && !this.charset) {
+            this.charset = this.contentType.params.charset;
+        }
 
         if (this.contentType.type === 'multipart' && this.contentType.params.boundary) {
             this._childNodes = [];
@@ -459,12 +521,65 @@
      * @param {Boolean} forceEmit If set to true does not keep any remainders
      */
     MimeNode.prototype._emitBody = function() {
+        var contentDisposition = this.headers['content-disposition'] && this.headers['content-disposition'][0] ||
+            mimefuncs.parseHeaderValue('');
+
         if (this._isMultipart || !this._bodyBuffer) {
             return;
         }
+
         this.content = mimefuncs.toArrayBuffer(this._bodyBuffer);
+
+        if (/^text\/(plain|html)$/i.test(this.contentType.value) && !/^attachment$/i.test(contentDisposition.value)) {
+
+            if (!this.charset && /^text\/html$/i.test(this.contentType.value)) {
+                this.charset = this._detectHTMLCharset(this._bodyBuffer);
+            }
+
+            // decode "binary" string to an unicode string
+            if (!/^utf[\-_]?8$/i.test(this.charset)) {
+                this.content = mimefuncs.charset.convert(this._bodyBuffer, this.charset || 'iso-8859-1');
+            }
+
+            // override charset for text nodes
+            this.charset = this.contentType.params.charset = 'utf-8';
+        }
         this._bodyBuffer = '';
+
         this._parser.onbody(this, this.content);
+    };
+
+    /**
+     * Detect charset from a html file
+     *
+     * @param {String} html Input HTML
+     * @returns {String} Charset if found or undefined
+     */
+    MimeNode.prototype._detectHTMLCharset = function(html) {
+        var charset, input, meta;
+
+        if (typeof html !== 'string') {
+            html = html.toString('ascii');
+        }
+
+        html = html.replace(/\r?\n|\r/g, " ");
+
+        if ((meta = html.match(/<meta\s+http-equiv=["'\s]*content-type[^>]*?>/i))) {
+            input = meta[0];
+        }
+
+        if (input) {
+            charset = input.match(/charset\s?=\s?([a-zA-Z\-_:0-9]*);?/);
+            if (charset) {
+                charset = (charset[1] || '').trim().toLowerCase();
+            }
+        }
+
+        if (!charset && (meta = html.match(/<meta\s+charset=["'\s]*([^"'<>\/\s]+)/i))) {
+            charset = (meta[1] || '').trim().toLowerCase();
+        }
+
+        return charset;
     };
 
     return MimeParser;
