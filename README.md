@@ -10,17 +10,13 @@ This is supposed to be a "low level" mime parsing module. No magic is performed 
 
 ## Installation
 
-### [volo](http://volojs.org/):
-
-    volo add whiteout-io/mimeparser/v0.1.0
-
 ### [Bower](http://bower.io/):
 
-    bower install git@github.com:whiteout-io/mimeparser.git#v0.1.0
+    bower install git@github.com:whiteout-io/mimeparser.git#v0.3.0
 
 ### [npm](https://www.npmjs.org/):
 
-    npm install https://github.com/whiteout-io/mimeparser/tarball/v0.1.0
+    npm install https://github.com/whiteout-io/mimeparser/tarball/v0.3.0
 
 ## Dependencies
 

@@ -1,6 +1,6 @@
 {
   "name": "mimeparser",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "homepage": "https://github.com/whiteout-io/mimeparser",
   "description": "Parse a mime tree, no magic included.",
   "author": "Andris Reinman <andris@kreata.ee>",
@@ -32,6 +32,5 @@
     "arraybuffer-slice": "0.0.2",
     "grunt-mocha-test": "~0.10.0",
     "amdefine": "~0.1.0"
-  },
-  "volo": {}
+  }
 }

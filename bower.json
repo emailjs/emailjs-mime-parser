@@ -1,7 +1,7 @@
 {
     "name": "mimeparser",
     "main": "src/mimeparser.js",
-    "version": "0.1.0",
+    "version": "0.3.0",
     "homepage": "https://github.com/whiteout-io/mimeparser",
     "authors": ["Andris Reinman <andris@kreata.ee>"],
     "description": "Parse a mime tree, no magic included.",
