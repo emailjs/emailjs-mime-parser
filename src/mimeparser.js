@@ -94,6 +94,7 @@
 
         if (this.node._lineCount || this._remainder) {
             this.node.writeLine(this._remainder);
+            this._remainder = '';
         }
 
         if (this.node) {
@@ -396,6 +397,8 @@
                 }
             }.bind(this));
         }
+
+        return parsed;
     };
 
     /**
@@ -538,7 +541,7 @@
 
             // decode "binary" string to an unicode string
             if (!/^utf[\-_]?8$/i.test(this.charset)) {
-                this.content = mimefuncs.charset.convert(this._bodyBuffer, this.charset || 'iso-8859-1');
+                this.content = mimefuncs.charset.convert(mimefuncs.toArrayBuffer(this._bodyBuffer), this.charset || 'iso-8859-1');
             }
 
             // override charset for text nodes
