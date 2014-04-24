@@ -31,6 +31,7 @@
     "stringencoding": "https://github.com/whiteout-io/stringencoding/tarball/v0.1.0",
     "arraybuffer-slice": "0.0.2",
     "grunt-mocha-test": "~0.10.0",
+    "sinon": "^1.9.0",
     "amdefine": "~0.1.0"
   }
 }

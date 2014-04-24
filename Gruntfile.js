@@ -38,9 +38,11 @@ module.exports = function(grunt) {
         mocha_phantomjs: {
             all: {
                 options: {
-                    reporter: 'spec'
-                },
-                src: ['http://localhost:12346/test/index.html']
+                    reporter: 'spec',
+                    urls: [
+                        'http://localhost:12346/test/index.html'
+                    ]
+                }
             }
         }
     });
