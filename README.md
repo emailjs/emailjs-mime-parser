@@ -20,7 +20,7 @@ This is supposed to be a "low level" mime parsing module. No magic is performed 
 
 ## Dependencies
 
-This module depends on [mimefuncs](https://github.com/whiteout-io/mimefuncs). The dependency will not be fetched automatically, so make sure it is there.
+This module depends on [mimefuncs](https://github.com/whiteout-io/mimefuncs). The dependency will be fetched automatically.
 
 ## Usage
 
