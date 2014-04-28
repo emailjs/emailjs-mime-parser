@@ -4,7 +4,7 @@ Lib for parsing mime streams.
 
 ## Scope
 
-This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as ArrayBuffer values, so no need to perform any base64 or quoted printable decoding by yourself.
+This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed.
 
 [![Build Status](https://travis-ci.org/whiteout-io/mimeparser.png?branch=master)](https://travis-ci.org/whiteout-io/mimeparser)
 
@@ -35,10 +35,10 @@ This module depends on [mimefuncs](https://github.com/whiteout-io/mimefuncs). Th
 
 ### Feed data to the parser
 
-Feed data with `write(chunk)`. Where `chunk` is supposed to be an ArrayBuffer or a "binary" string.
+Feed data with `write(chunk)`. Where `chunk` is supposed to be an Uint8Array or a 'binary' string.
 
 ```javascript
-parser.write("Subject: test\n\nHello world!");
+parser.write('Subject: test\n\nHello world!');
 ```
 
 When all data is feeded to the parser, call `end()`
@@ -57,18 +57,18 @@ To receive node headers, define `onheader` function
 
 ```javascript
 parser.onheader = function(node){
-    console.log(node.header.join("\n")); // List all headers
-    console.log(node.headers["content-type"]); // List value for Content-Type
+    console.log(node.header.join('\n')); // List all headers
+    console.log(node.headers['content-type']); // List value for Content-Type
 };
 ```
 
 #### Body
 
-Body is emitted in chunks of ArrayBuffers, define `onbody` to catch these chunks
+Body is emitted in chunks of Typed Arrays, define `onbody` to catch these chunks
 
 ```javascript
 parser.onbody = function(node, chunk){
-    console.log("Received " + chunk.byteLength + " bytes for " + node.path.join("."));
+    console.log('Received %s bytes for %s', chunk.byteLength, node.path.join("."));
 };
 ```
 
@@ -78,7 +78,7 @@ When the parsing is finished, `onend` is called
 
 ```javascript
 parser.onend = function(){
-    console.log("Parsing is finished");
+    console.log('Parsing is finished');
 };
 ```
 
@@ -86,7 +86,7 @@ parser.onend = function(){
 
 This seems like asynchronous but actually it is not. So always define `onheader`, `onbody` and `onend` before writing the first chunk of data to the parser.
 
-**message/rfc822** is automatically parsed if the mime part does not have a `Content-Disposition: attachment` header, otherwise it will be emitted as a regular attachment (as one long ArrayBuffer value).
+**message/rfc822** is automatically parsed if the mime part does not have a `Content-Disposition: attachment` header, otherwise it will be emitted as a regular attachment (as one long Uint8Array value).
 
 ## Hands on
 
