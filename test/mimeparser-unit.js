@@ -470,7 +470,7 @@ define(function(require) {
             });
 
             describe('#_emitBody', function() {
-                it('should emit an undecoded arraybuffer for non text nodes', function() {
+                it('should emit an undecoded typed array for non text nodes', function() {
                     sinon.stub(node._parser, 'onbody');
 
                     node.contentType = {
@@ -485,7 +485,7 @@ define(function(require) {
                     node._parser.onbody.restore();
                 });
 
-                it('should emit a decoded arraybuffer for text nodes', function() {
+                it('should emit a decoded typed array for text nodes', function() {
                     sinon.stub(node._parser, 'onbody');
 
                     node.contentType = {

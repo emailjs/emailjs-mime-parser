@@ -64,7 +64,7 @@
      * Writes a chunk of data to the processing queue. Splits data to lines and feeds
      * complete lines to the current node element
      *
-     * @param {ArrayBuffer|String} chunk Chunk to be processed. Either an ArrayBuffer value or a 'binary' string
+     * @param {Uint8Array|String} chunk Chunk to be processed. Either an Uint8Array value or a 'binary' string
      */
     MimeParser.prototype.write = function(chunk) {
         if (!chunk || !chunk.length) {
@@ -72,7 +72,7 @@
         }
 
         var lines = (this._remainder + (typeof chunk === 'object' ?
-            mimefuncs.fromArrayBuffer(chunk) : chunk)).split(/\r?\n/g);
+            mimefuncs.fromTypedArray(chunk) : chunk)).split(/\r?\n/g);
         this._remainder = lines.pop();
 
         for (var i = 0, len = lines.length; i < len; i++) {
@@ -85,7 +85,7 @@
     /**
      * Indicates that there is no more data coming
      *
-     * @param {ArrayBuffer|String} [chunk] Final chunk to be processed
+     * @param {Uint8Array|String} [chunk] Final chunk to be processed
      */
     MimeParser.prototype.end = function(chunk) {
         if (chunk && chunk.length) {
@@ -137,7 +137,7 @@
      * Called when a body chunk is emitted
      * @event
      * @param {Object} node Current mime part
-     * @param {ArrayBuffer} chunk Body chunk
+     * @param {Uint8Array} chunk Body chunk
      */
     MimeParser.prototype.onbody = function() {};
 
@@ -297,7 +297,7 @@
                     hasBinary = true;
                 }
                 // use default charset at first and if the actual charset is resolved, the conversion is re-run
-                value = mimefuncs.charset.decode(mimefuncs.charset.convert(mimefuncs.toArrayBuffer(value), this.charset || 'iso-8859-1'));
+                value = mimefuncs.charset.decode(mimefuncs.charset.convert(mimefuncs.toTypedArray(value), this.charset || 'iso-8859-1'));
             }
 
             if (!this.headers[key]) {
@@ -491,7 +491,7 @@
                     }
 
                     if (curLine.length) {
-                        this._bodyBuffer += mimefuncs.fromArrayBuffer(mimefuncs.base64.decode(curLine));
+                        this._bodyBuffer += mimefuncs.fromTypedArray(mimefuncs.base64.decode(curLine));
                     }
 
                     break;
@@ -531,7 +531,7 @@
             return;
         }
 
-        this.content = mimefuncs.toArrayBuffer(this._bodyBuffer);
+        this.content = mimefuncs.toTypedArray(this._bodyBuffer);
 
         if (/^text\/(plain|html)$/i.test(this.contentType.value) && !/^attachment$/i.test(contentDisposition.value)) {
 
@@ -541,7 +541,7 @@
 
             // decode "binary" string to an unicode string
             if (!/^utf[\-_]?8$/i.test(this.charset)) {
-                this.content = mimefuncs.charset.convert(mimefuncs.toArrayBuffer(this._bodyBuffer), this.charset || 'iso-8859-1');
+                this.content = mimefuncs.charset.convert(mimefuncs.toTypedArray(this._bodyBuffer), this.charset || 'iso-8859-1');
             }
 
             // override charset for text nodes
