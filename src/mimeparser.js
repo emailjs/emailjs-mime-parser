@@ -112,6 +112,7 @@
      * @param {String} path Path to the node
      */
     MimeParser.prototype.getNode = function(path) {
+        path = path || '';
         return this.nodes['node' + path] || null;
     };
 
@@ -227,6 +228,11 @@
          */
         this._isRfc822 = false;
 
+        /**
+         * Stores the raw content of this node
+         */
+        this.raw = '';
+
         // Att this node to the path cache
         this._parser.nodes['node' + this.path.join('.')] = this;
     }
@@ -239,6 +245,9 @@
      * @param {String} line Entire input line as 'binary' string
      */
     MimeNode.prototype.writeLine = function(line) {
+
+        this.raw += (this.raw ? '\n' : '') + line;
+
         if (this._state === 'HEADER') {
             this._processHeaderLine(line);
         } else if (this._state === 'BODY') {
