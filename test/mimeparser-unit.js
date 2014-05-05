@@ -782,6 +782,72 @@ define(function(require) {
                 parser.write(fixture);
                 parser.end();
             });
+
+            it('should store raw content for a node', function(done) {
+                var fixtures = {
+                    'root': 'MIME-Version: 1.0\n' +
+                        'Content-Type: multipart/mixed; boundary=frontier\n' +
+                        '\n' +
+                        'This is a message with multiple parts in MIME format.\n' +
+                        '--frontier\n' +
+                        'Content-Type: text/plain\n' +
+                        '\n' +
+                        'This is the body of the message.\n' +
+                        '\n' +
+                        '--frontier\n' +
+                        'Content-Type: multipart/mixed; boundary=sub\n' +
+                        '\n' +
+                        '--sub\n' +
+                        'Content-Type: text/plain\n' +
+                        '\n' +
+                        'This is the body of the message.\n' +
+                        '\n' +
+                        '--sub--\n' +
+                        '\n' +
+                        '--frontier\n' +
+                        'Content-Type: application/octet-stream\n' +
+                        'Content-Transfer-Encoding: base64\n' +
+                        '\n' +
+                        'PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5P\n' +
+                        'gogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbW\n' +
+                        'Vzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==\n' +
+                        '--frontier--',
+                    '1': 'Content-Type: text/plain\n' +
+                        '\n' +
+                        'This is the body of the message.\n' +
+                        '',
+                    '2': 'Content-Type: multipart/mixed; boundary=sub\n' +
+                        '\n' +
+                        '--sub\n' +
+                        'Content-Type: text/plain\n' +
+                        '\n' +
+                        'This is the body of the message.\n' +
+                        '\n' +
+                        '--sub--\n' +
+                        '',
+                    '2.1': 'Content-Type: text/plain\n' +
+                        '\n' +
+                        'This is the body of the message.\n' +
+                        '',
+                    '3': 'Content-Type: application/octet-stream\n' +
+                        'Content-Transfer-Encoding: base64\n' +
+                        '\n' +
+                        'PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5P\n' +
+                        'gogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbW\n' +
+                        'Vzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg=='
+                };
+
+                parser.onend = function() {
+                    expect(parser.getNode().raw).to.equal(fixtures.root);
+                    expect(parser.getNode('1').raw).to.equal(fixtures['1']);
+                    expect(parser.getNode('2').raw).to.equal(fixtures['2']);
+                    expect(parser.getNode('2.1').raw).to.equal(fixtures['2.1']);
+                    expect(parser.getNode('3').raw).to.equal(fixtures['3']);
+                    done();
+                };
+                parser.write(fixtures.root);
+                parser.end();
+            });
         });
     });
 });
