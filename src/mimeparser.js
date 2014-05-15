@@ -22,14 +22,14 @@
     'use strict';
 
     if (typeof define === 'function' && define.amd) {
-        define(['mimefuncs', 'addressparser'], factory);
+        define(['mimefuncs', 'addressparser', './tzabbr'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('mimefuncs'), require('addressparser'));
+        module.exports = factory(require('mimefuncs'), require('addressparser'), require('./tzabbr'));
     } else {
-        root.MimeParser = factory(root.mimefuncs, root.addressparser);
+        root.MimeParser = factory(root.mimefuncs, root.addressparser, root.tzabbr);
     }
 
-}(this, function(mimefuncs, addressparser) {
+}(this, function(mimefuncs, addressparser, tzabbr) {
     'use strict';
 
     /**
@@ -362,6 +362,11 @@
                     value: [].concat(addressparser.parse(value) || [])
                 };
                 break;
+            case 'date':
+                parsedValue = {
+                    value: this._parseDate(value)
+                };
+                break;
             default:
                 parsedValue = {
                     value: value
@@ -374,6 +379,50 @@
         });
 
         return parsedValue;
+    };
+
+    /**
+     * Checks if a date string can be parsed. Falls back replacing timezone
+     * abbrevations with timezone values
+     *
+     * @param {String} str Date header
+     * @returns {String} UTC date string if parsing succeeded, otherwise returns input value
+     */
+    MimeNode.prototype._parseDate = function(str) {
+        str = (str || '').toString().trim();
+
+        var date = new Date(str);
+
+        if (this._isValidDate(date)) {
+            return date.toUTCString().replace(/GMT/, '+0000');
+        }
+
+        // Assume last alpha part is a timezone
+        // Ex: "Date: Thu, 15 May 2014 13:53:30 EEST"
+        str = str.replace(/\b[a-z]+$/i, function(tz) {
+            tz = tz.toUpperCase();
+            if (tzabbr.hasOwnProperty(tz)) {
+                return tzabbr[tz];
+            }
+            return tz;
+        });
+
+        date = new Date(str);
+
+        if (this._isValidDate(date)) {
+            return date.toUTCString().replace(/GMT/, '+0000');
+        } else {
+            return str;
+        }
+    };
+
+    /**
+     * Checks if a value is a Date object and it contains an actual date value
+     * @param {Date} date Date object to check
+     * @returns {Boolean} True if the value is a valid date
+     */
+    MimeNode.prototype._isValidDate = function(date) {
+        return Object.prototype.toString.call(date) === '[object Date]' && date.toString() !== 'Invalid Date';
     };
 
     MimeNode.prototype._decodeHeaderCharset = function(parsed, options) {

@@ -286,6 +286,40 @@ define(function(require) {
                 });
             });
 
+            describe('#_parseDate', function() {
+                it('should parse Date object', function() {
+                    var date = 'Thu, 15 May 2014 11:53:30 +0100';
+                    expect(node._parseDate(date)).to.equal('Thu, 15 May 2014 10:53:30 +0000');
+                });
+
+                it('should parse Date object with tz abbr', function() {
+                    var date = 'Thu, 15 May 2014 10:53:30 UTC';
+                    expect(node._parseDate(date)).to.equal('Thu, 15 May 2014 10:53:30 +0000');
+                });
+
+                it('should parse Date object with european tz', function() {
+                    var date = 'Thu, 15 May 2014 13:53:30 EEST';
+                    expect(node._parseDate(date)).to.equal('Thu, 15 May 2014 10:53:30 +0000');
+                });
+
+                it('should return original on unexpected input', function() {
+                    var date = 'Thu, 15 May 2014 13:53:30 YYY';
+                    expect(node._parseDate(date)).to.equal('Thu, 15 May 2014 13:53:30 YYY');
+                });
+            });
+
+            describe('#_isValidDate', function() {
+                it('should detect proper Date object', function() {
+                    expect(node._isValidDate(new Date())).to.be.true;
+                });
+                it('should detect invalid Date object', function() {
+                    expect(node._isValidDate(new Date('ooo'))).to.be.false;
+                });
+                it('should detect invalid input', function() {
+                    expect(node._isValidDate('ooo')).to.be.false;
+                });
+            });
+
             describe('#_decodeHeaderCharset', function() {
                 it('should decode object values', function() {
                     expect(node._decodeHeaderCharset({
@@ -763,6 +797,18 @@ define(function(require) {
                 parser.onheader = function(node) {
                     expect(node.headers.a[0].value).to.equal('ÕÄÖÜ');
                     expect(node.headers.b[0].value).to.equal('ÕÄÖÜ');
+                };
+
+                parser.onend = done;
+                parser.write(fixture);
+                parser.end();
+            });
+
+            it('should parse date header', function(done) {
+                var fixture = 'Date: Thu, 15 May 2014 13:53:30 EEST\r\n\r\n';
+
+                parser.onheader = function(node) {
+                    expect(node.headers.date[0].value).to.equal('Thu, 15 May 2014 10:53:30 +0000');
                 };
 
                 parser.onend = done;
