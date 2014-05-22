@@ -12,11 +12,11 @@ This is supposed to be a "low level" mime parsing module. No magic is performed 
 
 ### [Bower](http://bower.io/):
 
-    bower install git@github.com:whiteout-io/mimeparser.git#v0.3.4
+    bower install git@github.com:whiteout-io/mimeparser.git#<TAG_NAME>
 
 ### [npm](https://www.npmjs.org/):
 
-    npm install https://github.com/whiteout-io/mimeparser/tarball/v0.3.4
+    npm install https://github.com/whiteout-io/mimeparser/tarball/<TAG_NAME>
 
 ## Dependencies
 
