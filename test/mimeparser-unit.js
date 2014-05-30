@@ -894,6 +894,45 @@ define(function(require) {
                 parser.write(fixtures.root);
                 parser.end();
             });
+
+            it('should parse format=flowed text', function(done) {
+                var fixture = 'Content-Type: text/plain; format=flowed\r\n\r\nFirst line \r\ncontinued \r\nand so on\n-- \nSignature\ntere\n From\n  Hello\n > abc\nabc\n';
+
+                parser.onend = function() {
+                    expect(parser.nodes).to.not.be.empty;
+                    expect(new TextDecoder('utf-8').decode(parser.nodes.node.content)).to.equal('First line continued and so on\n-- \nSignature\ntere\nFrom\n Hello\n> abc\nabc\n');
+                    done();
+                };
+
+                parser.write(fixture);
+                parser.end();
+            });
+
+            it('should parse format=fixed text', function(done) {
+                var fixture = 'Content-Type: text/plain; format=fixed\r\n\r\nFirst line \r\ncontinued \r\nand so on';
+
+                parser.onend = function() {
+                    expect(parser.nodes).to.not.be.empty;
+                    expect(new TextDecoder('utf-8').decode(parser.nodes.node.content)).to.equal('First line \ncontinued \nand so on');
+                    done();
+                };
+
+                parser.write(fixture);
+                parser.end();
+            });
+
+            it('should parse delsp=yes text', function(done) {
+                var fixture = 'Content-Type: text/plain; format=flowed; delsp=yes\r\n\r\nFirst line \r\ncontinued \r\nand so on';
+
+                parser.onend = function() {
+                    expect(parser.nodes).to.not.be.empty;
+                    expect(new TextDecoder('utf-8').decode(parser.nodes.node.content)).to.equal('First linecontinuedand so on');
+                    done();
+                };
+
+                parser.write(fixture);
+                parser.end();
+            });
         });
     });
 });

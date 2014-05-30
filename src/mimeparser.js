@@ -584,9 +584,38 @@
     MimeNode.prototype._emitBody = function() {
         var contentDisposition = this.headers['content-disposition'] && this.headers['content-disposition'][0] ||
             mimefuncs.parseHeaderValue('');
+        var delSp;
 
         if (this._isMultipart || !this._bodyBuffer) {
             return;
+        }
+
+        // Process flowed text before emitting it
+        if (/^text\/(plain|html)$/i.test(this.contentType.value) &&
+            this.contentType.params && /^flowed$/i.test(this.contentType.params.format)) {
+
+            delSp = /^yes$/i.test(this.contentType.params.delsp);
+
+            this._bodyBuffer = this._bodyBuffer.
+            split('\n').
+            // remove soft linebreaks
+            // soft linebreaks are added after space symbols
+            reduce(function(previousValue, currentValue, index) {
+                var body = previousValue;
+                if (delSp) {
+                    // delsp adds spaces to text to be able to fold it
+                    // these spaces can be removed once the text is unfolded
+                    body = body.replace(/[ ]+$/, '');
+                }
+                if (/ $/.test(previousValue) && !/(^|\n)\-\- $/.test(previousValue) ||  index === 1) {
+                    return body + currentValue;
+                } else {
+                    return body + '\n' + currentValue;
+                }
+            }).
+            // remove whitespace stuffing
+            // http://tools.ietf.org/html/rfc3676#section-4.4
+            replace(/^ /gm, '');
         }
 
         this.content = mimefuncs.toTypedArray(this._bodyBuffer);
