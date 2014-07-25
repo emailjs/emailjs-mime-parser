@@ -10,17 +10,13 @@ This is supposed to be a "low level" mime parsing module. No magic is performed 
 
 ## Installation
 
-### [Bower](http://bower.io/):
-
-    bower install git@github.com:whiteout-io/mimeparser.git#<TAG_NAME>
-
 ### [npm](https://www.npmjs.org/):
 
-    npm install https://github.com/whiteout-io/mimeparser/tarball/<TAG_NAME>
+    npm install --save mimeparser
 
 ## Dependencies
 
-This module depends on [mimefuncs](https://github.com/whiteout-io/mimefuncs). The dependency will be fetched automatically.
+This module depends on [mimefuncs](https://github.com/whiteout-io/mimefuncs) and [wo-addressparser](https://github.com/whiteout-io/addressparser) . The dependency will be fetched automatically. Please use your require config accordingly.
 
 ## Usage
 

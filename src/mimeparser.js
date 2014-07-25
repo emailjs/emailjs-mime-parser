@@ -22,9 +22,9 @@
     'use strict';
 
     if (typeof define === 'function' && define.amd) {
-        define(['mimefuncs', 'addressparser', 'mimeparser-tzabbr'], factory);
+        define(['mimefuncs', 'wo-addressparser', 'mimeparser-tzabbr'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('mimefuncs'), require('addressparser'), require('./mimeparser-tzabbr'));
+        module.exports = factory(require('mimefuncs'), require('wo-addressparser'), require('./mimeparser-tzabbr'));
     } else {
         root.MimeParser = factory(root.mimefuncs, root.addressparser, root.tzabbr);
     }

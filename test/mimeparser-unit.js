@@ -9,7 +9,7 @@ define(function(require) {
     var chai = require('chai');
     var sinon = require('sinon');
     var Mimeparser = require('../src/mimeparser');
-    var TextDecoder = require('stringencoding').TextDecoder;
+    var TextDecoder = require('wo-stringencoding').TextDecoder;
 
     var expect = chai.expect;
     chai.Assertion.includeStack = true;

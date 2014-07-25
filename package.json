@@ -1,6 +1,6 @@
 {
   "name": "mimeparser",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "homepage": "https://github.com/whiteout-io/mimeparser",
   "description": "Parse a mime tree, no magic included.",
   "author": "Andris Reinman <andris@kreata.ee>",
@@ -17,8 +17,8 @@
   },
   "main": "src/mimeparser",
   "dependencies": {
-    "mimefuncs": "https://github.com/whiteout-io/mimefuncs/tarball/v0.3.2",
-    "addressparser": "https://github.com/whiteout-io/addressparser/tarball/v0.1.2"
+    "mimefuncs": "~0.3.4",
+    "wo-addressparser": "~0.1.3"
   },
   "devDependencies": {
     "chai": "~1.8.1",
@@ -28,7 +28,7 @@
     "grunt-contrib-jshint": "~0.8.0",
     "mocha": "~1.16.2",
     "requirejs": "~2.1.10",
-    "stringencoding": "https://github.com/whiteout-io/stringencoding/tarball/v0.1.0",
+    "wo-stringencoding": "~0.1.1",
     "grunt-mocha-test": "~0.10.0",
     "sinon": "^1.9.0",
     "amdefine": "~0.1.0"
