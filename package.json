@@ -1,6 +1,6 @@
 {
   "name": "mimeparser",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "homepage": "https://github.com/whiteout-io/mimeparser",
   "description": "Parse a mime tree, no magic included.",
   "author": "Andris Reinman <andris@kreata.ee>",
@@ -17,7 +17,7 @@
   },
   "main": "src/mimeparser",
   "dependencies": {
-    "mimefuncs": "~0.3.4",
+    "mimefuncs": "~0.3.5",
     "wo-addressparser": "~0.1.3"
   },
   "devDependencies": {
