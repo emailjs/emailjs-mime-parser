@@ -600,14 +600,14 @@
             split('\n').
             // remove soft linebreaks
             // soft linebreaks are added after space symbols
-            reduce(function(previousValue, currentValue, index) {
+            reduce(function(previousValue, currentValue) {
                 var body = previousValue;
                 if (delSp) {
                     // delsp adds spaces to text to be able to fold it
                     // these spaces can be removed once the text is unfolded
                     body = body.replace(/[ ]+$/, '');
                 }
-                if (/ $/.test(previousValue) && !/(^|\n)\-\- $/.test(previousValue) ||  index === 1) {
+                if (/ $/.test(previousValue) && !/(^|\n)\-\- $/.test(previousValue)) {
                     return body + currentValue;
                 } else {
                     return body + '\n' + currentValue;

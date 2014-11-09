@@ -905,6 +905,19 @@
                 parser.end();
             });
 
+            it('should not corrupt format=flowed text that is not flowed', function(done) {
+                var fixture = 'Content-Type: text/plain; format=flowed\r\n\r\nFirst line.\r\nSecond line.\r\n';
+
+                parser.onend = function() {
+                    expect(parser.nodes).to.not.be.empty;
+                    expect(new TextDecoder('utf-8').decode(parser.nodes.node.content)).to.equal('First line.\nSecond line.\n');
+                    done();
+                };
+
+                parser.write(fixture);
+                parser.end();
+            });
+
             it('should parse format=fixed text', function(done) {
                 var fixture = 'Content-Type: text/plain; format=fixed\r\n\r\nFirst line \r\ncontinued \r\nand so on';
 
