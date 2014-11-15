@@ -30,7 +30,7 @@
     "requirejs": "~2.1.10",
     "wo-stringencoding": "~0.1.1",
     "grunt-mocha-test": "~0.10.0",
-    "sinon": "^1.9.0",
+    "sinon": "1.9.0",
     "amdefine": "~0.1.0"
   }
 }
