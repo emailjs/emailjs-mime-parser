@@ -1,4 +1,4 @@
-# mimeparser
+# emailjs-mime-parser
 
 Lib for parsing mime streams.
 
@@ -6,27 +6,27 @@ Lib for parsing mime streams.
 
 This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed.
 
-[![Build Status](https://travis-ci.org/whiteout-io/mimeparser.png?branch=master)](https://travis-ci.org/whiteout-io/mimeparser)
+[![Build Status](https://travis-ci.org/emailjs/emailjs-mime-parser.png?branch=master)](https://travis-ci.org/emailjs/emailjs-mime-parser)
 
 ## Installation
 
 ### [npm](https://www.npmjs.org/):
 
-    npm install --save mimeparser
+    npm install --save emailjs-mime-parser
 
 ## Dependencies
 
-This module depends on [mimefuncs](https://github.com/whiteout-io/mimefuncs) and [wo-addressparser](https://github.com/whiteout-io/addressparser) . The dependency will be fetched automatically. Please use your require config accordingly.
+This module depends on [emailjs-mime-codec](https://github.com/emailjs/emailjs-mime-codec) and [emailjs-addressparser](https://github.com/emailjs/emailjs-addressparser) . The dependency will be fetched automatically. Please use your require config accordingly.
 
 ## Usage
 
 ### AMD
 
-    var MimeParser = require('mimeparser');
+    var MimeParser = require('emailjs-mime-parser');
 
 ### non-AMD
 
-    <script src="mimeparser"></script>
+    <script src="emailjs-mime-parser.js"></script>
     // exposes MimeParser the constructor to the global object
 
 ### Feed data to the parser
@@ -87,9 +87,8 @@ This seems like asynchronous but actually it is not. So always define `onheader`
 ## Hands on
 
 ```bash
-git clone git@github.com:whiteout-io/mimeparser.git
-cd mimeparser
-npm install && npm test
+$ git clone git@github.com:emailjs/emailjs-mime-parser.git
+$ cd emailjs-mime-parser && npm install && npm test
 ```
 
 ## License

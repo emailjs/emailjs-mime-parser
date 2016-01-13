@@ -5,11 +5,10 @@ require.config({
     paths: {
         'test': './test',
         'chai': './node_modules/chai/chai',
-        'mimefuncs': './node_modules/mimefuncs/src/mimefuncs',
-        'addressparser': './node_modules/wo-addressparser/src/addressparser',
-        'stringencoding': './node_modules/wo-stringencoding/dist/stringencoding',
-        'sinon': './node_modules/sinon/pkg/sinon',
-        'mimeparser-tzabbr': './src/mimeparser-tzabbr'
+        'emailjs-mime-codec': './node_modules/emailjs-mime-codec/src/emailjs-mime-codec',
+        'emailjs-addressparser': './node_modules/emailjs-addressparser/src/emailjs-addressparser',
+        'emailjs-stringencoding': './node_modules/emailjs-stringencoding/src/emailjs-stringencoding',
+        'sinon': './node_modules/sinon/pkg/sinon'
     },
     shim: {
         sinon: {

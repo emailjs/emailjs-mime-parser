@@ -2,16 +2,16 @@
 
 (function(factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['chai', 'sinon', '../src/mimeparser', 'stringencoding'], factory);
+        define(['chai', 'sinon', '../src/emailjs-mime-parser', 'emailjs-stringencoding'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('chai'), require('sinon'), require('../src/mimeparser'), require('wo-stringencoding'));
+        module.exports = factory(require('chai'), require('sinon'), require('../src/emailjs-mime-parser'), require('emailjs-stringencoding'));
     }
 }(function(chai, sinon, Mimeparser, stringencoding) {
     var TextDecoder = stringencoding.TextDecoder;
     var expect = chai.expect;
     chai.Assertion.includeStack = true;
 
-    describe('mimeparser', function() {
+    describe('Mimeparser', function() {
         var parser;
 
         beforeEach(function() {
