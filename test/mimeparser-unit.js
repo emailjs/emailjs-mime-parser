@@ -948,6 +948,59 @@
                 parser.write(fixture);
                 parser.end();
             });
+            
+            it('should emit bodystructure', function(done) {
+                var fixture =
+                    'MIME-Version: 1.0\n' +
+                    'Content-Type: multipart/mixed;\n' +
+                    ' boundary="------------304E429112E7D6AC36F087A8"\n' +
+                    '\n' +
+                    'This is a multi-part message in MIME format.\n' +
+                    '--------------304E429112E7D6AC36F087A8\n' +
+                    'Content-Type: text/html; charset=utf-8\n' +
+                    'Content-Transfer-Encoding: 7bit\n' +
+                    '\n' +
+                    '<html/>\n' +
+                    '--------------304E429112E7D6AC36F087A8\n' +
+                    'Content-Type: text/plain; charset=UTF-8; x-mac-type="0"; x-mac-creator="0";\n' +
+                    ' name="hello.mime"\n' +
+                    'Content-Transfer-Encoding: base64\n' +
+                    'Content-Disposition: attachment;\n' +
+                    ' filename="hello.mime"\n' +
+                    '\n' +
+                    'SGkgbW9tIQ==\n' +
+                    '--------------304E429112E7D6AC36F087A8--\n';
+
+                var expectedBodystructure =
+                    'MIME-Version: 1.0\n' +
+                    'Content-Type: multipart/mixed;\n' +
+                    ' boundary="------------304E429112E7D6AC36F087A8"\n' +
+                    '\n' +
+                    '--------------304E429112E7D6AC36F087A8\n' +
+                    'Content-Type: text/html; charset=utf-8\n' +
+                    'Content-Transfer-Encoding: 7bit\n' +
+                    '\n' +
+                    '--------------304E429112E7D6AC36F087A8\n' +
+                    'Content-Type: text/plain; charset=UTF-8; x-mac-type="0"; x-mac-creator="0";\n' +
+                    ' name="hello.mime"\n' +
+                    'Content-Transfer-Encoding: base64\n' +
+                    'Content-Disposition: attachment;\n' +
+                    ' filename="hello.mime"\n' +
+                    '\n' +
+                    '--------------304E429112E7D6AC36F087A8--\n';
+
+                var bodystructure = '';
+                parser.onbodystructure = function(chunk) {
+                    bodystructure += chunk;
+                };
+
+                parser.onend = function() {
+                    expect(bodystructure).to.equal(expectedBodystructure);
+                    done();
+                };
+                parser.write(fixture);
+                parser.end();
+            });
         });
     });
 }));
