@@ -68,6 +68,16 @@ parser.onbody = function(node, chunk){
 };
 ```
 
+#### Bodystructure
+
+Bodystructure is the original raw message stripped of bodies and multipart preambles. MIME stores like to store the bodystructure of MIME content in raw (loss-less) form, to later run through a MIME parser to answer IMAP or WebDAV type queries. Bodystructure is emitted in chunks of String. Define `onbodystructure` to catch these chunks:
+
+```javascript
+parser.onbodystructure = function(chunk){
+    console.log(chunk);
+};
+```
+
 #### Parse end
 
 When the parsing is finished, `onend` is called
@@ -80,7 +90,7 @@ parser.onend = function(){
 
 ## Quirks
 
-This seems like asynchronous but actually it is not. So always define `onheader`, `onbody` and `onend` before writing the first chunk of data to the parser.
+This seems like asynchronous but actually it is not. So always define `onheader`, `onbody`, `onbodystructure`, and `onend` before writing the first chunk of data to the parser.
 
 **message/rfc822** is automatically parsed if the mime part does not have a `Content-Disposition: attachment` header, otherwise it will be emitted as a regular attachment (as one long Uint8Array value).
 

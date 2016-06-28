@@ -1,6 +1,6 @@
 {
   "name": "emailjs-mime-parser",
-  "version": "1.0.0",
+  "version": "1.0.1-prerelease",
   "homepage": "https://github.com/emailjs/emailjs-mime-parser",
   "description": "Parse a mime tree, no magic included.",
   "author": "Andris Reinman <andris@kreata.ee>",

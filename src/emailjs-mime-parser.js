@@ -323,6 +323,14 @@
      */
     MimeParser.prototype.onbody = function() {};
 
+    /**
+     * Override this function.
+     * Called when a bodystructure chunk is emitted. The bodystructure is the raw multipart message with empty bodies.
+     * @event
+     * @param {String} chunk Bodystructure chunk
+     */
+    MimeParser.prototype.onbodystructure = function() {};
+
     // NODE PROCESSING
 
     /**
@@ -421,7 +429,7 @@
     // Public methods
 
     /**
-     * Processes an enitre input line
+     * Processes an entire input line
      *
      * @param {String} line Entire input line as 'binary' string
      */
@@ -458,6 +466,7 @@
         if (!line) {
             this._parseHeaders();
             this._parser.onheader(this);
+            this._parser.onbodystructure(this.header.join('\n') + '\n\n');
             this._state = 'BODY';
             return;
         }
@@ -678,7 +687,7 @@
     };
 
     /**
-     * Parses Content-Trasnfer-Encoding value to see if the body needs to be converted
+     * Parses Content-Transfer-Encoding value to see if the body needs to be converted
      * before it can be emitted
      */
     MimeNode.prototype._processContentTransferEncoding = function() {
@@ -700,12 +709,14 @@
 
         if (this._isMultipart) {
             if (line === '--' + this._multipartBoundary) {
+                this._parser.onbodystructure(line + '\n');            
                 if (this._currentChild) {
                     this._currentChild.finalize();
                 }
                 this._currentChild = new MimeNode(this, this._parser);
                 this._childNodes.push(this._currentChild);
             } else if (line === '--' + this._multipartBoundary + '--') {
+                this._parser.onbodystructure(line + '\n');
                 if (this._currentChild) {
                     this._currentChild.finalize();
                 }
@@ -713,7 +724,7 @@
             } else if (this._currentChild) {
                 this._currentChild.writeLine(line);
             } else {
-                // Ignore body for multipart
+                // Ignore multipart preamble
             }
         } else if (this._isRfc822) {
             this._currentChild.writeLine(line);
