@@ -26,7 +26,13 @@ This module depends on [emailjs-mime-codec](https://github.com/emailjs/emailjs-m
 
 ### non-AMD
 
+Example with dependancies in the correct order:
+
     <script src="emailjs-mime-parser.js"></script>
+    <script src="addressparser.js"></script>
+    <script src="mimefuncs.js"></script>
+    <script src="mimeparser.js"></script>
+    <script src="stringencoding.js"></script>
     // exposes MimeParser the constructor to the global object
 
 ### Feed data to the parser
