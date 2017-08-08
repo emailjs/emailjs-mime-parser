@@ -1,5 +1,7 @@
 # emailjs-mime-parser
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/emailjs/emailjs-mime-parser.svg)](https://greenkeeper.io/)
+
 Lib for parsing mime streams.
 
 ## Scope
