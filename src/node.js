@@ -37,6 +37,10 @@ MimeNode.prototype.finalize = function () {
   } else {
     this._emitBody()
   }
+
+  this.bodystructure = this.childNodes
+    .reduce((agg, child) => agg + '--' + this._multipartBoundary + '\n' + child.bodystructure, this.header.join('\n') + '\n\n') +
+    (this._multipartBoundary ? '--' + this._multipartBoundary + '--\n' : '')
 }
 
 /**

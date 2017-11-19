@@ -206,7 +206,7 @@ describe('message tests', function () {
     expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First linecontinuedand so on')
   })
 
-  it.skip('should emit bodystructure', function () {
+  it('should emit bodystructure', function () {
     var fixture =
       'MIME-Version: 1.0\n' +
       'Content-Type: multipart/mixed;\n' +
@@ -248,6 +248,6 @@ describe('message tests', function () {
 
     const root = parse(fixture)
     expect(root.childNodes).to.not.be.empty
-    expect(root.contentstructure).to.equal(expectedBodystructure)
+    expect(root.bodystructure).to.equal(expectedBodystructure)
   })
 })
