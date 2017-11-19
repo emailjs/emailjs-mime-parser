@@ -3,7 +3,7 @@ import { decode, convert, parseHeaderValue, mimeWordsDecode } from 'emailjs-mime
 import { decode as decodeBase64 } from 'emailjs-base64'
 import parseAddress from 'emailjs-addressparser'
 
-export default function MimeNode (parentNode) {
+export default function MimeNode () {
   this.header = [] // An array of unfolded header lines
   this.headers = {} // An object that holds header key=value pairs
   this.bodystructure = ''
@@ -11,7 +11,6 @@ export default function MimeNode (parentNode) {
   this.raw = '' // Stores the raw content of this node
 
   // Private properties
-  this._parentNode = parentNode // Parent node for this specific node
   this._state = 'HEADER' // Current state, always starts out with HEADER
   this._bodyBuffer = '' // Body buffer
   this._lineCount = 0 // Line counter bor the body part
