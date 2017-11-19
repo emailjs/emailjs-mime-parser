@@ -34,16 +34,18 @@
     "mocha": "^4.0.1",
     "nodemon": "^1.12.1",
     "pre-commit": "^1.2.2",
+    "sinon": "^4.1.2",
     "standard": "^10.0.3",
     "text-encoding": "^0.6.4"
   },
   "standard": {
     "globals": [
+      "sinon",
       "describe",
       "it",
       "before",
-      "beforeAll",
-      "afterAll",
+      "beforeEach",
+      "afterEach",
       "after",
       "expect"
     ],

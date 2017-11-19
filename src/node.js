@@ -8,6 +8,7 @@ export default function MimeNode (parentNode) {
   this.headers = {} // An object that holds header key=value pairs
   this.bodystructure = ''
   this.childNodes = [] // If this is a multipart or message/rfc822 mime part, the value will be converted to array and hold all child nodes for this node
+  this.raw = '' // Stores the raw content of this node
 
   // Private properties
   this._parentNode = parentNode // Parent node for this specific node
@@ -19,7 +20,6 @@ export default function MimeNode (parentNode) {
   this._isMultipart = false // Indicates if this is a multipart node
   this._multipartBoundary = false // Stores boundary value for current multipart node
   this._isRfc822 = false // Indicates if this is a message/rfc822 node
-  this.raw = '' // Stores the raw content of this node
 }
 
 MimeNode.prototype.writeLine = function (line) {

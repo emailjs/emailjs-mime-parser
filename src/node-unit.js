@@ -1,4 +1,14 @@
-describe.skip('MimeNode tests', function () {
+/* eslint-disable no-unused-expressions */
+
+import MimeNode from './node'
+
+describe('MimeNode tests', function () {
+  let node
+
+  beforeEach(() => {
+    node = new MimeNode()
+  })
+
   describe('#writeLine', function () {
     it('should process the line according to current state', function () {
       sinon.stub(node, '_processHeaderLine')
@@ -12,9 +22,6 @@ describe.skip('MimeNode tests', function () {
 
       expect(node._processHeaderLine.withArgs('abc').callCount).to.equal(1)
       expect(node._processBodyLine.withArgs('def').callCount).to.equal(1)
-
-      node._processHeaderLine.restore()
-      node._processBodyLine.restore()
     })
   })
 
@@ -35,26 +42,18 @@ describe.skip('MimeNode tests', function () {
 
       expect(node._emitBody.callCount).to.equal(1)
       expect(node._currentChild.finalize.callCount).to.equal(1)
-
-      node._emitBody.restore()
-      node._currentChild.finalize.restore()
     })
   })
 
   describe('#_processHeaderLine', function () {
     it('should start body on empty line', function () {
       sinon.stub(node, '_parseHeaders')
-      sinon.stub(node._parser, 'onheader')
 
       node._state = 'HEADER'
       node._processHeaderLine('')
 
       expect(node._state).to.equal('BODY')
       expect(node._parseHeaders.callCount).to.equal(1)
-      expect(node._parser.onheader.callCount).to.equal(1)
-
-      node._parseHeaders.restore()
-      node._parser.onheader.restore()
     })
 
     it('should push a line to the header', function () {
@@ -71,9 +70,7 @@ describe.skip('MimeNode tests', function () {
 
   describe('#_parseHeaders', function () {
     it('should parse header values', function () {
-      sinon.stub(node, '_parseHeaderValue', function (a, b) {
-        return b
-      })
+      sinon.stub(node, '_parseHeaderValue').callsFake((a, b) => b)
       sinon.stub(node, '_processContentType')
       sinon.stub(node, '_processContentTransferEncoding')
 
@@ -90,23 +87,10 @@ describe.skip('MimeNode tests', function () {
       expect(node._parseHeaderValue.withArgs('ghi', 'jkl').callCount).to.equal(1)
       expect(node._processContentType.callCount).to.equal(1)
       expect(node._processContentTransferEncoding.callCount).to.equal(1)
-
-      node._parseHeaderValue.restore()
-      node._processContentType.restore()
-      node._processContentTransferEncoding.restore()
     })
 
     it('should default to latin1 charset for binary', function () {
-      sinon.stub(node, '_parseHeaderValue', function (a, b) {
-        if (a === 'content-type') {
-          return {
-            value: b,
-            params: {}
-          }
-        } else {
-          return b
-        }
-      })
+      sinon.stub(node, '_parseHeaderValue').callsFake((a, b) => (a === 'content-type') ? {value: b, params: {}} : b)
       sinon.stub(node, '_processContentType')
       sinon.stub(node, '_processContentTransferEncoding')
 
@@ -122,25 +106,10 @@ describe.skip('MimeNode tests', function () {
           params: {}
         }]
       })
-
-      node._parseHeaderValue.restore()
-      node._processContentType.restore()
-      node._processContentTransferEncoding.restore()
     })
 
     it('should detect utf8 charset for binary', function () {
-      sinon.stub(node, '_parseHeaderValue', function (a, b) {
-        if (a === 'content-type') {
-          return {
-            value: b,
-            params: {
-              charset: 'utf-8'
-            }
-          }
-        } else {
-          return b
-        }
-      })
+      sinon.stub(node, '_parseHeaderValue').callsFake((a, b) => (a === 'content-type') ? { value: b, params: { charset: 'utf-8' } } : b)
       sinon.stub(node, '_processContentType')
       sinon.stub(node, '_processContentTransferEncoding')
 
@@ -158,10 +127,6 @@ describe.skip('MimeNode tests', function () {
           }
         }]
       })
-
-      node._parseHeaderValue.restore()
-      node._processContentType.restore()
-      node._processContentTransferEncoding.restore()
     })
   })
 
@@ -178,8 +143,6 @@ describe.skip('MimeNode tests', function () {
       })
 
       expect(node._decodeHeaderCharset.callCount).to.equal(1)
-
-      node._decodeHeaderCharset.restore()
     })
 
     it('should parse addresses', function () {
@@ -194,8 +157,6 @@ describe.skip('MimeNode tests', function () {
       })
 
       expect(node._decodeHeaderCharset.callCount).to.equal(1)
-
-      node._decodeHeaderCharset.restore()
     })
 
     it('should preserve strings', function () {
@@ -207,8 +168,6 @@ describe.skip('MimeNode tests', function () {
       })
 
       expect(node._decodeHeaderCharset.callCount).to.equal(1)
-
-      node._decodeHeaderCharset.restore()
     })
 
     it('should have unicode subject with strange characters', function () {
@@ -336,20 +295,18 @@ describe.skip('MimeNode tests', function () {
   describe('#_processBodyLine', function () {
     describe('multipart nodes', function () {
       it('should add new node on boundary', function () {
-        node._childNodes = []
+        node.childNodes = []
         node._isMultipart = 'mixed'
         node._multipartBoundary = 'zzz'
 
         node._processBodyLine('--zzz')
 
-        expect(node._childNodes.length).to.equal(1)
+        expect(node.childNodes.length).to.equal(1)
         var finalizeStub = sinon.stub(node._currentChild, 'finalize')
 
         node._processBodyLine('--zzz')
-        expect(node._childNodes.length).to.equal(2)
+        expect(node.childNodes.length).to.equal(2)
         expect(finalizeStub.callCount).to.equal(1)
-
-        finalizeStub.restore()
       })
 
       it('should close node on boundary', function () {
@@ -358,13 +315,11 @@ describe.skip('MimeNode tests', function () {
         node._currentChild = {
           finalize: function () {}
         }
-        node._childNodes = [node._currentChild]
+        node.childNodes = [node._currentChild]
 
         var finalizeStub = sinon.stub(node._currentChild, 'finalize')
         node._processBodyLine('--zzz--')
         expect(finalizeStub.callCount).to.equal(1)
-
-        finalizeStub.restore()
       })
 
       it('should write a line to the current node', function () {
@@ -373,13 +328,11 @@ describe.skip('MimeNode tests', function () {
         node._currentChild = {
           writeLine: function () {}
         }
-        node._childNodes = [node._currentChild]
+        node.childNodes = [node._currentChild]
 
         var writeLineStub = sinon.stub(node._currentChild, 'writeLine')
         node._processBodyLine('abc')
         expect(writeLineStub.withArgs('abc').callCount).to.equal(1)
-
-        writeLineStub.restore()
       })
     })
 
@@ -388,13 +341,11 @@ describe.skip('MimeNode tests', function () {
       node._currentChild = {
         writeLine: function () {}
       }
-      node._childNodes = [node._currentChild]
+      node.childNodes = [node._currentChild]
 
       var writeLineStub = sinon.stub(node._currentChild, 'writeLine')
       node._processBodyLine('abc')
       expect(writeLineStub.withArgs('abc').callCount).to.equal(1)
-
-      writeLineStub.restore()
     })
 
     it('should process base64 data', function () {
@@ -435,8 +386,6 @@ describe.skip('MimeNode tests', function () {
 
   describe('#_emitBody', function () {
     it('should emit an undecoded typed array for non text nodes', function () {
-      sinon.stub(node._parser, 'onbody')
-
       node.contentType = {
         value: 'attachment/bin'
       }
@@ -444,14 +393,10 @@ describe.skip('MimeNode tests', function () {
       node._bodyBuffer = '\xfe\xf0'
       node._emitBody()
 
-      expect(node._parser.onbody.args[0][1]).to.deep.equal(new Uint8Array([0xfe, 0xf0]))
-
-      node._parser.onbody.restore()
+      expect(node.content).to.deep.equal(new Uint8Array([0xfe, 0xf0]))
     })
 
     it('should emit a decoded typed array for text nodes', function () {
-      sinon.stub(node._parser, 'onbody')
-
       node.contentType = {
         value: 'text/plain',
         params: {
@@ -462,14 +407,11 @@ describe.skip('MimeNode tests', function () {
       node._bodyBuffer = '\xfe\xf0'
       node._emitBody()
 
-      expect(node._parser.onbody.args[0][1]).to.deep.equal(new Uint8Array([0xC5, 0xBE, 0xC5, 0xA1]))
+      expect(node.content).to.deep.equal(new Uint8Array([0xC5, 0xBE, 0xC5, 0xA1]))
       expect(node.charset).to.equal('utf-8')
-
-      node._parser.onbody.restore()
     })
 
     it('should check non unicode charset from html', function () {
-      sinon.stub(node._parser, 'onbody')
       sinon.stub(node, '_detectHTMLCharset').returns('iso-8859-13')
 
       node.contentType = {
@@ -479,14 +421,11 @@ describe.skip('MimeNode tests', function () {
       node._bodyBuffer = '\xfe\xf0'
       node._emitBody()
 
-      expect(node._parser.onbody.args[0][1]).to.deep.equal(new Uint8Array([0xC5, 0xBE, 0xC5, 0xA1]))
+      expect(node.content).to.deep.equal(new Uint8Array([0xC5, 0xBE, 0xC5, 0xA1]))
       expect(node.charset).to.equal('utf-8')
-
-      node._parser.onbody.restore()
     })
 
     it('should check unicode charset from html', function () {
-      sinon.stub(node._parser, 'onbody')
       sinon.stub(node, '_detectHTMLCharset').returns('utf-8')
 
       node.contentType = {
@@ -496,20 +435,12 @@ describe.skip('MimeNode tests', function () {
       node._bodyBuffer = '\xC5\xBE\xC5\xA1'
       node._emitBody()
 
-      expect(node._parser.onbody.args[0][1]).to.deep.equal(new Uint8Array([0xC5, 0xBE, 0xC5, 0xA1]))
+      expect(node.content).to.deep.equal(new Uint8Array([0xC5, 0xBE, 0xC5, 0xA1]))
       expect(node.charset).to.equal('utf-8')
-
-      node._parser.onbody.restore()
     })
   })
 
   describe('#_detectHTMLCharset', function () {
-    var node
-
-    beforeEach(function () {
-      node = parser.node
-    })
-
     it('should detect charset from simple meta', function () {
       expect(node._detectHTMLCharset('\n\n<meta charset="utf-8">')).to.equal('utf-8')
       expect(node._detectHTMLCharset('\n\n<meta\n charset="utf-8">')).to.equal('utf-8')
