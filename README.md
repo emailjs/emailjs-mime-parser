@@ -1,107 +1,57 @@
 # emailjs-mime-parser
 
-Lib for parsing mime streams.
+[![Build Status](https://travis-ci.org/emailjs/emailjs-mime-parser.png?branch=master)](https://travis-ci.org/emailjs/emailjs-mime-parser) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)  [![ES6+](https://camo.githubusercontent.com/567e52200713e0f0c05a5238d91e1d096292b338/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f65732d362b2d627269676874677265656e2e737667)](https://kangax.github.io/compat-table/es6/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Scope
-
-This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed.
-
-[![Build Status](https://travis-ci.org/emailjs/emailjs-mime-parser.png?branch=master)](https://travis-ci.org/emailjs/emailjs-mime-parser)
-
-## Installation
-
-### [npm](https://www.npmjs.org/):
-
-    npm install --save emailjs-mime-parser
-
-## Dependencies
-
-This module depends on [emailjs-mime-codec](https://github.com/emailjs/emailjs-mime-codec) and [emailjs-addressparser](https://github.com/emailjs/emailjs-addressparser) . The dependency will be fetched automatically. Please use your require config accordingly.
+Parse a mime tree, no magic included. This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed.
 
 ## Usage
 
-### AMD
-
-    var MimeParser = require('emailjs-mime-parser');
-
-### non-AMD
-
-    <script src="emailjs-mime-parser.js"></script>
-    // exposes MimeParser the constructor to the global object
-
-### Feed data to the parser
-
-Feed data with `write(chunk)`. Where `chunk` is supposed to be an Uint8Array or a 'binary' string.
-
-```javascript
-parser.write('Subject: test\n\nHello world!');
+```
+npm install --save emailjs-mime-parser
 ```
 
-When all data is feeded to the parser, call `end()`
-
 ```javascript
-parser.end();
+import parse from 'emailjs-mime-parse'
+
+parse(String) -> MimeNode
 ```
 
-### Receiveing the output
+### MimeNode
 
-You can receive the output by creating appropriate event handler functions.
+A MimeNode represents a MIME tree.
 
-#### Headers
-
-To receive node headers, define `onheader` function
-
-```javascript
-parser.onheader = function(node){
-    console.log(node.header.join('\n')); // List all headers
-    console.log(node.headers['content-type']); // List value for Content-Type
-};
+```
+MimeNode
+|
++----> childNodes -> [MimeNode]
++----> content -> Uint8Array
++----> bodyStructure -> String
 ```
 
-#### Body
-
-Body is emitted in chunks of Typed Arrays, define `onbody` to catch these chunks
-
-```javascript
-parser.onbody = function(node, chunk){
-    console.log('Received %s bytes for %s', chunk.byteLength, node.path.join("."));
-};
+```
+MimeNode.childNodes -> [MimeNode]
 ```
 
-#### Bodystructure
+The child MIME nodes are stored in the `childNodes` array.
 
-Bodystructure is the original raw message stripped of bodies and multipart preambles. MIME stores like to store the bodystructure of MIME content in raw (loss-less) form, to later run through a MIME parser to answer IMAP or WebDAV type queries. Bodystructure is emitted in chunks of String. Define `onbodystructure` to catch these chunks:
-
-```javascript
-parser.onbodystructure = function(chunk){
-    console.log(chunk);
-};
+```
+MimeNode.content -> Uint8Array
 ```
 
-#### Parse end
-
-When the parsing is finished, `onend` is called
-
-```javascript
-parser.onend = function(){
-    console.log('Parsing is finished');
-};
-```
-
-## Quirks
-
-This seems like asynchronous but actually it is not. So always define `onheader`, `onbody`, `onbodystructure`, and `onend` before writing the first chunk of data to the parser.
+The content of the specific node is stored in `this.content` as Uint8Array. All body data is emitted as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed.
 
 **message/rfc822** is automatically parsed if the mime part does not have a `Content-Disposition: attachment` header, otherwise it will be emitted as a regular attachment (as one long Uint8Array value).
 
-## Hands on
 
-```bash
-$ git clone git@github.com:emailjs/emailjs-mime-parser.git
-$ cd emailjs-mime-parser && npm install && npm test
+```
+MimeNode.bodyStructure -> String
 ```
 
+Bodystructure is the original raw message stripped of bodies and multipart preambles. MIME stores like to store the bodystructure of MIME content in raw (loss-less) form, to later run through a MIME parser to answer IMAP or WebDAV type queries.
+
 ## License
+
+    The MIT license
 
     Copyright (c) 2013 Andris Reinman
 
