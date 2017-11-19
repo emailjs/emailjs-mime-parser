@@ -5,12 +5,7 @@ import { TextDecoder } from 'text-encoding'
 
 describe('message tests', function () {
   it('should succeed', function () {
-    var fixture = 'From: Sender Name <sender.name@example.com>\r\n' +
-      'To: Receiver Name <receiver.name@example.com>\r\n' +
-      'Subject: Hello world!\r\n' +
-      'Date: Fri, 4 Oct 2013 07:17:32 +0000\r\n' +
-      'Message-Id: <simplemessage@localhost>\r\n' +
-      'Content-Type: text/plain; charset="utf-8"\r\n' +
+    var fixture = 'Content-Type: text/plain; charset="utf-8"\r\n' +
       'Content-Transfer-Encoding: quoted-printable\r\n' +
       '\r\n' +
       '\r\n' +
@@ -23,19 +18,8 @@ describe('message tests', function () {
       '\r\n'
     var expectedText = '\nHi,\n\nthis is a private conversation. To read my encrypted message below, simply open it in Whiteout Mail.\nOpen Whiteout Mail: https://chrome.google.com/webstore/detail/jjgghafhamholjigjoghcfcekhkonijg\n\n'
 
-    const result = parse(fixture)
-    expect(result.nodes).to.not.be.empty
-    expect(result.header).to.deep.equal([
-      'From: Sender Name <sender.name@example.com>',
-      'To: Receiver Name <receiver.name@example.com>',
-      'Subject: Hello world!',
-      'Date: Fri, 4 Oct 2013 07:17:32 +0000',
-      'Message-Id: <simplemessage@localhost>',
-      'Content-Type: text/plain; charset="utf-8"',
-      'Content-Transfer-Encoding: quoted-printable'
-    ])
-    expect(new TextDecoder('utf-8').decode(result.body)).to.equal(expectedText)
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal(expectedText)
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal(expectedText)
   })
 
   it('should parse specific headers', function () {
@@ -47,8 +31,8 @@ describe('message tests', function () {
       'Content-Transfer-Encoding: quoted-printable\r\n' +
       '\r\n'
 
-    const result = parse(fixture)
-    expect(result.root.headers.from).to.deep.equal([{
+    const root = parse(fixture)
+    expect(root.headers.from).to.deep.equal([{
       value: [{
         address: 'sender.name@example.com',
         name: 'Sender Name'
@@ -56,12 +40,12 @@ describe('message tests', function () {
       initial: 'Sender Name <sender.name@example.com>'
     }])
 
-    expect(result.root.headers.subject).to.deep.equal([{
+    expect(root.headers.subject).to.deep.equal([{
       value: 'Hello world!',
       initial: 'Hello world!'
     }])
 
-    expect(result.root.headers['content-type']).to.deep.equal([{
+    expect(root.headers['content-type']).to.deep.equal([{
       value: 'multipart/signed',
       params: {
         boundary: 'Signed Boundary',
@@ -73,21 +57,14 @@ describe('message tests', function () {
     }])
   })
 
-  it('should parse header and body', function () {
+  it('should parse body', function () {
     var fixture = 'Content-Type: text/plain; name="foo.txt"\r\n' +
       'Content-Disposition: attachment; filename="foo.txt"\r\n' +
       'Content-Transfer-Encoding: base64\r\n' +
       '\r\n' +
       'YXNkYXNkYXNkYQ==\r\n'
-    const result = parse(fixture)
-    expect(result.root.header).to.deep.equal([
-      'Content-Type: text/plain; name="foo.txt"',
-      'Content-Disposition: attachment; filename="foo.txt"',
-      'Content-Transfer-Encoding: base64'
-    ])
-    expect(new TextDecoder('utf-8').decode(result.body)).to.equal('asdasdasda')
-    expect(result.nodes).to.not.be.empty
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal('asdasdasda')
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal('asdasdasda')
   })
 
   it('should parse encoded headers', function () {
@@ -102,8 +79,8 @@ describe('message tests', function () {
       '\r\n' +
       'abc'
 
-    const result = parse(fixture)
-    expect(result.root.headers).to.deep.equal({
+    const root = parse(fixture)
+    expect(root.headers).to.deep.equal({
       subject: [{
         value: 'Avaldus lepingu lõpetamiseks',
         initial: '=?iso-8859-1?Q?Avaldu?= =?iso-8859-1?Q?s_lepingu_?= =?iso-8859-1?Q?l=F5petamise?= =?iso-8859-1?Q?ks?='
@@ -147,9 +124,8 @@ describe('message tests', function () {
       '\r\n' +
       'l=F5petam'
     var expectedText = 'lõpetam'
-    const result = parse(fixture)
-    expect(new TextDecoder('utf-8').decode(result.body)).to.equal(expectedText)
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal(expectedText)
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal(expectedText)
   })
 
   it('should ignore charset for plaintext attachment', function () {
@@ -159,9 +135,8 @@ describe('message tests', function () {
       '\r\n' +
       'l=F5petam'
     var expectedText = 'lõpetam'
-    const result = parse(fixture)
-    expect(new TextDecoder('iso-8859-1').decode(result.body)).to.equal(expectedText)
-    expect(new TextDecoder('iso-8859-1').decode(result.nodes.node.content)).to.equal(expectedText)
+    const root = parse(fixture)
+    expect(new TextDecoder('iso-8859-1').decode(root.content)).to.equal(expectedText)
   })
 
   it('should detect charset from html', function () {
@@ -170,9 +145,8 @@ describe('message tests', function () {
       '\r\n' +
       '=3Cmeta=20charset=3D=22latin_1=22/=3E=D5=C4=D6=DC'
     var expectedText = '<meta charset="latin_1"/>ÕÄÖÜ'
-    const result = parse(fixture)
-    expect(new TextDecoder('utf-8').decode(result.body)).to.equal(expectedText)
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal(expectedText)
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal(expectedText)
   })
 
   it('should use latin1 as the default for headers', function () {
@@ -181,17 +155,17 @@ describe('message tests', function () {
       'b: \xD5\xC4\xD6\xDC\r\n' +
       '\r\n' +
       ''
-    const result = parse(fixture)
-    expect(result.root.headers.a[0].value).to.equal('ÕÄÖÜ')
-    expect(result.root.headers.b[0].value).to.equal('ÕÄÖÜ')
+    const root = parse(fixture)
+    expect(root.headers.a[0].value).to.equal('ÕÄÖÜ')
+    expect(root.headers.b[0].value).to.equal('ÕÄÖÜ')
   })
 
   it('should parse date header', function () {
     var fixture = 'Date: Thu, 15 May 2014 13:53:30 EEST\r\n' +
       '\r\n' +
       ''
-    const result = parse(fixture)
-    expect(result.root.headers.date[0].value).to.equal('Thu, 15 May 2014 10:53:30 +0000')
+    const root = parse(fixture)
+    expect(root.headers.date[0].value).to.equal('Thu, 15 May 2014 10:53:30 +0000')
   })
 
   it('should detect 8bit header encoding from content-type', function () {
@@ -199,106 +173,40 @@ describe('message tests', function () {
       'Content-Type: text/plain; charset=utf-8\r\n' +
       'b: \xC3\x95\xC3\x84\xC3\x96\xC3\x9C\r\n' +
       '\r\n'
-    const result = parse(fixture)
-    expect(result.root.headers.a[0].value).to.equal('ÕÄÖÜ')
-    expect(result.root.headers.b[0].value).to.equal('ÕÄÖÜ')
-  })
-
-  it.skip('should store raw content for a node', function () {
-    var fixtures = {
-      'root': 'MIME-Version: 1.0\n' +
-        'Content-Type: multipart/mixed; boundary=frontier\n' +
-        '\n' +
-        'This is a message with multiple parts in MIME format.\n' +
-        '--frontier\n' +
-        'Content-Type: text/plain\n' +
-        '\n' +
-        'This is the body of the message.\n' +
-        '\n' +
-        '--frontier\n' +
-        'Content-Type: multipart/mixed; boundary=sub\n' +
-        '\n' +
-        '--sub\n' +
-        'Content-Type: text/plain\n' +
-        '\n' +
-        'This is the body of the message.\n' +
-        '\n' +
-        '--sub--\n' +
-        '\n' +
-        '--frontier\n' +
-        'Content-Type: application/octet-stream\n' +
-        'Content-Transfer-Encoding: base64\n' +
-        '\n' +
-        'PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5P\n' +
-        'gogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbW\n' +
-        'Vzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==\n' +
-        '--frontier--',
-      '1': 'Content-Type: text/plain\n' +
-        '\n' +
-        'This is the body of the message.\n' +
-        '',
-      '2': 'Content-Type: multipart/mixed; boundary=sub\n' +
-        '\n' +
-        '--sub\n' +
-        'Content-Type: text/plain\n' +
-        '\n' +
-        'This is the body of the message.\n' +
-        '\n' +
-        '--sub--\n' +
-        '',
-      '2.1': 'Content-Type: text/plain\n' +
-        '\n' +
-        'This is the body of the message.\n' +
-        '',
-      '3': 'Content-Type: application/octet-stream\n' +
-        'Content-Transfer-Encoding: base64\n' +
-        '\n' +
-        'PGh0bWw+CiAgPGhlYWQ+CiAgPC9oZWFkPgogIDxib2R5P\n' +
-        'gogICAgPHA+VGhpcyBpcyB0aGUgYm9keSBvZiB0aGUgbW\n' +
-        'Vzc2FnZS48L3A+CiAgPC9ib2R5Pgo8L2h0bWw+Cg=='
-    }
-
-    const result = parse(fixtures.root)
-    expect(result.getNode().raw).to.equal(fixtures.root)
-    expect(result.getNode('1').raw).to.equal(fixtures['1'])
-    expect(result.getNode('2').raw).to.equal(fixtures['2'])
-    expect(result.getNode('2.1').raw).to.equal(fixtures['2.1'])
-    expect(result.getNode('3').raw).to.equal(fixtures['3'])
+    const root = parse(fixture)
+    expect(root.headers.a[0].value).to.equal('ÕÄÖÜ')
+    expect(root.headers.b[0].value).to.equal('ÕÄÖÜ')
   })
 
   it('should parse format=flowed text', function () {
     var fixture = 'Content-Type: text/plain; format=flowed\r\n\r\nFirst line \r\ncontinued \r\nand so on\n-- \nSignature\ntere\n From\n  Hello\n > abc\nabc\n'
 
-    const result = parse(fixture)
-    expect(result.nodes).to.not.be.empty
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal('First line continued and so on\n-- \nSignature\ntere\nFrom\n Hello\n> abc\nabc\n')
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First line continued and so on\n-- \nSignature\ntere\nFrom\n Hello\n> abc\nabc\n')
   })
 
   it('should not corrupt format=flowed text that is not flowed', function () {
     var fixture = 'Content-Type: text/plain; format=flowed\r\n\r\nFirst line.\r\nSecond line.\r\n'
 
-    const result = parse(fixture)
-    expect(result.nodes).to.not.be.empty
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal('First line.\nSecond line.\n')
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First line.\nSecond line.\n')
   })
 
   it('should parse format=fixed text', function () {
     var fixture = 'Content-Type: text/plain; format=fixed\r\n\r\nFirst line \r\ncontinued \r\nand so on'
 
-    const result = parse(fixture)
-    expect(result.nodes).to.not.be.empty
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal('First line \ncontinued \nand so on')
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First line \ncontinued \nand so on')
   })
 
   it('should parse delsp=yes text', function () {
     var fixture = 'Content-Type: text/plain; format=flowed; delsp=yes\r\n\r\nFirst line \r\ncontinued \r\nand so on'
 
-    const result = parse(fixture)
-    expect(result.nodes).to.not.be.empty
-    expect(new TextDecoder('utf-8').decode(result.nodes.node.content)).to.equal('First linecontinuedand so on')
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First linecontinuedand so on')
   })
 
-  it('should emit bodystructure', function () {
+  it.skip('should emit bodystructure', function () {
     var fixture =
       'MIME-Version: 1.0\n' +
       'Content-Type: multipart/mixed;\n' +
@@ -338,7 +246,8 @@ describe('message tests', function () {
       '\n' +
       '--------------304E429112E7D6AC36F087A8--\n'
 
-    const result = parse(fixture)
-    expect(result.bodystructure).to.equal(expectedBodystructure)
+    const root = parse(fixture)
+    expect(root.childNodes).to.not.be.empty
+    expect(root.contentstructure).to.equal(expectedBodystructure)
   })
 })

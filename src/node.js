@@ -3,103 +3,25 @@ import { decode, convert, parseHeaderValue, mimeWordsDecode } from 'emailjs-mime
 import { decode as decodeBase64 } from 'emailjs-base64'
 import parseAddress from 'emailjs-addressparser'
 
-/**
- * Creates an object that holds and manages one part of the multipart message
- *
- * @constructor
- * @param {Object} parentNode Reference to the parent element. If not specified, then this is root node
- * @param {Object} parser MimeParser object
- */
-export default function MimeNode (parentNode, parser) {
-    /**
-     * An array of unfolded header lines
-     */
-  this.header = []
+export default function MimeNode (parentNode) {
+  this.header = [] // An array of unfolded header lines
+  this.headers = {} // An object that holds header key=value pairs
+  this.bodystructure = ''
+  this.childNodes = [] // If this is a multipart or message/rfc822 mime part, the value will be converted to array and hold all child nodes for this node
 
-    /**
-     * An object that holds header key=value pairs
-     */
-  this.headers = {}
-
-    /**
-     * Path for this node
-     */
-  this.path = parentNode ? parentNode.path.concat(parentNode._childNodes.length + 1) : []
-
-    // Private properties
-
-    /**
-     * Reference to the 'master' parser object
-     */
-  this._parser = parser
-
-    /**
-     * Parent node for this specific node
-     */
-  this._parentNode = parentNode
-
-    /**
-     * Current state, always starts out with HEADER
-     */
-  this._state = 'HEADER'
-
-    /**
-     * Body buffer
-     */
-  this._bodyBuffer = ''
-
-    /**
-     * Line counter bor the body part
-     */
-  this._lineCount = 0
-
-    /**
-     * If this is a multipart or message/rfc822 mime part, the value
-     * will be converted to array and hold all child nodes for this node
-     */
-  this._childNodes = false
-
-    /**
-     * Active child node (if available)
-     */
-  this._currentChild = false
-
-    /**
-     * Remainder string when dealing with base64 and qp values
-     */
-  this._lineRemainder = ''
-
-    /**
-     * Indicates if this is a multipart node
-     */
-  this._isMultipart = false
-
-    /**
-     * Stores boundary value for current multipart node
-     */
-  this._multipartBoundary = false
-
-    /**
-     * Indicates if this is a message/rfc822 node
-     */
-  this._isRfc822 = false
-
-    /**
-     * Stores the raw content of this node
-     */
-  this.raw = ''
-
-    // Att this node to the path cache
-  this._parser.nodes['node' + this.path.join('.')] = this
+  // Private properties
+  this._parentNode = parentNode // Parent node for this specific node
+  this._state = 'HEADER' // Current state, always starts out with HEADER
+  this._bodyBuffer = '' // Body buffer
+  this._lineCount = 0 // Line counter bor the body part
+  this._currentChild = false // Active child node (if available)
+  this._lineRemainder = '' // Remainder string when dealing with base64 and qp values
+  this._isMultipart = false // Indicates if this is a multipart node
+  this._multipartBoundary = false // Stores boundary value for current multipart node
+  this._isRfc822 = false // Indicates if this is a message/rfc822 node
+  this.raw = '' // Stores the raw content of this node
 }
 
-// Public methods
-
-/**
- * Processes an entire input line
- *
- * @param {String} line Entire input line as 'binary' string
- */
 MimeNode.prototype.writeLine = function (line) {
   this.raw += (this.raw ? '\n' : '') + line
 
@@ -110,18 +32,13 @@ MimeNode.prototype.writeLine = function (line) {
   }
 }
 
-/**
- * Processes any remainders
- */
 MimeNode.prototype.finalize = function () {
   if (this._isRfc822) {
     this._currentChild.finalize()
   } else {
-    this._emitBody(true)
+    this._emitBody()
   }
 }
-
-// Private methods
 
 /**
  * Processes a line in the HEADER state. It the line is empty, change state to BODY
@@ -131,8 +48,7 @@ MimeNode.prototype.finalize = function () {
 MimeNode.prototype._processHeaderLine = function (line) {
   if (!line) {
     this._parseHeaders()
-    this._parser.header = this.header
-    this._parser.bodystructure += this.header.join('\n') + '\n\n'
+    this.bodystructure += this.header.join('\n') + '\n\n'
     this._state = 'BODY'
     return
   }
@@ -330,7 +246,7 @@ MimeNode.prototype._processContentType = function () {
   }
 
   if (this.contentType.type === 'multipart' && this.contentType.params.boundary) {
-    this._childNodes = []
+    this.childNodes = []
     this._isMultipart = (this.contentType.value.split('/').pop() || 'mixed')
     this._multipartBoundary = this.contentType.params.boundary
   }
@@ -342,9 +258,9 @@ MimeNode.prototype._processContentType = function () {
      */
     contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
     if ((contentDisposition.value || '').toLowerCase().trim() !== 'attachment') {
-      this._childNodes = []
-      this._currentChild = new MimeNode(this, this._parser)
-      this._childNodes.push(this._currentChild)
+      this.childNodes = []
+      this._currentChild = new MimeNode(this)
+      this.childNodes.push(this._currentChild)
       this._isRfc822 = true
     }
   }
@@ -372,14 +288,14 @@ MimeNode.prototype._processBodyLine = function (line) {
 
   if (this._isMultipart) {
     if (line === '--' + this._multipartBoundary) {
-      this._parser.bodystructure += line + '\n'
+      this.bodystructure += line + '\n'
       if (this._currentChild) {
         this._currentChild.finalize()
       }
-      this._currentChild = new MimeNode(this, this._parser)
-      this._childNodes.push(this._currentChild)
+      this._currentChild = new MimeNode(this)
+      this.childNodes.push(this._currentChild)
     } else if (line === '--' + this._multipartBoundary + '--') {
-      this._parser.bodystructure += line + '\n'
+      this.bodystructure += line + '\n'
       if (this._currentChild) {
         this._currentChild.finalize()
       }
@@ -487,8 +403,6 @@ MimeNode.prototype._emitBody = function () {
     this.charset = this.contentType.params.charset = 'utf-8'
   }
   this._bodyBuffer = ''
-
-  this._parser.body = this.content
 }
 
 /**
