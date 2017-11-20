@@ -67,12 +67,9 @@ export default class MimeNode {
    * Joins folded header lines and calls Content-Type and Transfer-Encoding processors
    */
   _parseHeaders () {
-    // Join header lines
-    var key, value, hasBinary
-
-    for (var i = 0, len = this.header.length; i < len; i++) {
-      value = this.header[i].split(':')
-      key = (value.shift() || '').trim().toLowerCase()
+    for (let hasBinary = false, i = 0, len = this.header.length; i < len; i++) {
+      let value = this.header[i].split(':')
+      const key = (value.shift() || '').trim().toLowerCase()
       value = (value.join(':') || '').replace(/\n/g, '').trim()
 
       if (value.match(/[\u0080-\uFFFF]/)) {
@@ -83,18 +80,14 @@ export default class MimeNode {
         value = decode(convert(str2arr(value), this.charset || 'iso-8859-1'))
       }
 
-      if (!this.headers[key]) {
-        this.headers[key] = [this._parseHeaderValue(key, value)]
-      } else {
-        this.headers[key].push(this._parseHeaderValue(key, value))
-      }
+      this.headers[key] = (this.headers[key] || []).concat([this._parseHeaderValue(key, value)])
 
       if (!this.charset && key === 'content-type') {
         this.charset = this.headers[key][this.headers[key].length - 1].params.charset
       }
 
       if (hasBinary && this.charset) {
-      // reset values and start over once charset has been resolved and 8bit content has been found
+        // reset values and start over once charset has been resolved and 8bit content has been found
         hasBinary = false
         this.headers = {}
         i = -1 // next iteration has i == 0
@@ -163,10 +156,9 @@ export default class MimeNode {
    * @param {String} str Date header
    * @returns {String} UTC date string if parsing succeeded, otherwise returns input value
    */
-  _parseDate (str) {
-    str = (str || '').toString().trim()
-
-    var date = new Date(str)
+  _parseDate (str = '') {
+    str = str.trim()
+    let date = new Date(str)
 
     if (this._isValidDate(date)) {
       return date.toUTCString().replace(/GMT/, '+0000')
@@ -238,8 +230,6 @@ export default class MimeNode {
    * Parses Content-Type value and selects following actions.
    */
   _processContentType () {
-    var contentDisposition
-
     this.contentType = (this.headers['content-type'] && this.headers['content-type'][0]) || parseHeaderValue('text/plain')
     this.contentType.value = (this.contentType.value || '').toLowerCase().trim()
     this.contentType.type = (this.contentType.value.split('/').shift() || 'text')
@@ -259,7 +249,7 @@ export default class MimeNode {
      * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
      * otherwise treat it like a regular attachment
      */
-      contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
+      const contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
       if ((contentDisposition.value || '').toLowerCase().trim() !== 'attachment') {
         this.childNodes = []
         this._currentChild = new MimeNode(this)
@@ -285,8 +275,6 @@ export default class MimeNode {
    * @param {String} line Entire input line as 'binary' string
    */
   _processBodyLine (line) {
-    var curLine, match
-
     this._lineCount++
 
     if (this._isMultipart) {
@@ -313,7 +301,7 @@ export default class MimeNode {
     } else {
       switch (this.contentTransferEncoding.value) {
         case 'base64':
-          curLine = this._lineRemainder + line.trim()
+          let curLine = this._lineRemainder + line.trim()
 
           if (curLine.length % 4) {
             this._lineRemainder = curLine.substr(-curLine.length % 4)
@@ -329,8 +317,8 @@ export default class MimeNode {
           break
         case 'quoted-printable':
           curLine = this._lineRemainder + (this._lineCount > 1 ? '\n' : '') + line
-
-          if ((match = curLine.match(/=[a-f0-9]{0,1}$/i))) {
+          const match = curLine.match(/=[a-f0-9]{0,1}$/i)
+          if (match) {
             this._lineRemainder = match[0]
             curLine = curLine.substr(0, curLine.length - this._lineRemainder.length)
           } else {
@@ -341,8 +329,8 @@ export default class MimeNode {
             return String.fromCharCode(parseInt(code, 16))
           })
           break
-                // case '7bit':
-                // case '8bit':
+        case '7bit':
+        case '8bit':
         default:
           this._bodyBuffer += (this._lineCount > 1 ? '\n' : '') + line
           break
@@ -356,24 +344,22 @@ export default class MimeNode {
    * @param {Boolean} forceEmit If set to true does not keep any remainders
   */
   _emitBody () {
-    var contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
-    var delSp
+    const contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
 
     if (this._isMultipart || !this._bodyBuffer) {
       return
     }
 
     // Process flowed text before emitting it
-    if (/^text\/(plain|html)$/i.test(this.contentType.value) &&
-        this.contentType.params && /^flowed$/i.test(this.contentType.params.format)) {
-      delSp = /^yes$/i.test(this.contentType.params.delsp)
+    if (/^text\/(plain|html)$/i.test(this.contentType.value) && this.contentType.params && /^flowed$/i.test(this.contentType.params.format)) {
+      const delSp = /^yes$/i.test(this.contentType.params.delsp)
 
       this._bodyBuffer = this._bodyBuffer
         .split('\n')
         // remove soft linebreaks
         // soft linebreaks are added after space symbols
         .reduce(function (previousValue, currentValue) {
-          var body = previousValue
+          let body = previousValue
           if (delSp) {
             // delsp adds spaces to text to be able to fold it
             // these spaces can be removed once the text is unfolded
@@ -415,15 +401,11 @@ export default class MimeNode {
    * @returns {String} Charset if found or undefined
    */
   _detectHTMLCharset (html) {
-    var charset, input, meta
-
-    if (typeof html !== 'string') {
-      html = html.toString('ascii')
-    }
+    let charset, input
 
     html = html.replace(/\r?\n|\r/g, ' ')
-
-    if ((meta = html.match(/<meta\s+http-equiv=["'\s]*content-type[^>]*?>/i))) {
+    let meta = html.match(/<meta\s+http-equiv=["'\s]*content-type[^>]*?>/i)
+    if (meta) {
       input = meta[0]
     }
 
