@@ -193,19 +193,7 @@ describe('MimeNode tests', function () {
 
     it('should return original on unexpected input', function () {
       var date = 'Thu, 15 May 2014 13:53:30 YYY'
-      expect(node._parseDate(date)).to.equal('Thu, 15 May 2014 13:53:30 YYY')
-    })
-  })
-
-  describe('#_isValidDate', function () {
-    it('should detect proper Date object', function () {
-      expect(node._isValidDate(new Date())).to.be.true
-    })
-    it('should detect invalid Date object', function () {
-      expect(node._isValidDate(new Date('ooo'))).to.be.false
-    })
-    it('should detect invalid input', function () {
-      expect(node._isValidDate('ooo')).to.be.false
+      expect(node._parseDate(date)).to.equal('Thu, 15 May 2014 13:53:30 +0000')
     })
   })
 

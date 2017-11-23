@@ -142,59 +142,24 @@ export default class MimeNode {
     }
     parsedValue.initial = value
 
-    this._decodeHeaderCharset(parsedValue, {
-      isAddress: isAddress
-    })
+    this._decodeHeaderCharset(parsedValue, { isAddress })
 
     return parsedValue
   }
 
   /**
    * Checks if a date string can be parsed. Falls back replacing timezone
-   * abbrevations with timezone values
+   * abbrevations with timezone values. Bogus timezones default to UTC.
    *
    * @param {String} str Date header
    * @returns {String} UTC date string if parsing succeeded, otherwise returns input value
    */
   _parseDate (str = '') {
-    str = str.trim()
-    let date = new Date(str)
-
-    if (this._isValidDate(date)) {
-      return date.toUTCString().replace(/GMT/, '+0000')
-    }
-
-    // Assume last alpha part is a timezone
-    // Ex: "Date: Thu, 15 May 2014 13:53:30 EEST"
-    str = str.replace(/\b[a-z]+$/i, function (tz) {
-      tz = tz.toUpperCase()
-      if (timezone.hasOwnProperty(tz)) {
-        return timezone[tz]
-      }
-      return tz
-    })
-
-    date = new Date(str)
-
-    if (this._isValidDate(date)) {
-      return date.toUTCString().replace(/GMT/, '+0000')
-    } else {
-      return str
-    }
+    const date = new Date(str.trim().replace(/\b[a-z]+$/i, tz => timezone[tz.toUpperCase()] || '+0000'))
+    return (date.toString() !== 'Invalid Date') ? date.toUTCString().replace(/GMT/, '+0000') : str
   }
 
-  /**
-   * Checks if a value is a Date object and it contains an actual date value
-   * @param {Date} date Date object to check
-   * @returns {Boolean} True if the value is a valid date
-   */
-  _isValidDate (date) {
-    return Object.prototype.toString.call(date) === '[object Date]' && date.toString() !== 'Invalid Date'
-  }
-
-  _decodeHeaderCharset (parsed, options) {
-    options = options || {}
-
+  _decodeHeaderCharset (parsed, { isAddress } = {}) {
     // decode default value
     if (typeof parsed.value === 'string') {
       parsed.value = mimeWordsDecode(parsed.value)
@@ -208,16 +173,12 @@ export default class MimeNode {
     })
 
     // decode addresses
-    if (options.isAddress && Array.isArray(parsed.value)) {
+    if (isAddress && Array.isArray(parsed.value)) {
       parsed.value.forEach(function (addr) {
         if (addr.name) {
           addr.name = mimeWordsDecode(addr.name)
           if (Array.isArray(addr.group)) {
-            this._decodeHeaderCharset({
-              value: addr.group
-            }, {
-              isAddress: true
-            })
+            this._decodeHeaderCharset({ value: addr.group }, { isAddress: true })
           }
         }
       }.bind(this))
