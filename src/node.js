@@ -1,3 +1,4 @@
+import { pathOr } from 'ramda'
 import timezone from './timezones'
 import { decode, convert, parseHeaderValue, mimeWordsDecode } from 'emailjs-mime-codec'
 import { decode as decodeBase64 } from 'emailjs-base64'
@@ -174,14 +175,14 @@ export default class MimeNode {
 
     // decode addresses
     if (isAddress && Array.isArray(parsed.value)) {
-      parsed.value.forEach(function (addr) {
+      parsed.value.forEach(addr => {
         if (addr.name) {
           addr.name = mimeWordsDecode(addr.name)
           if (Array.isArray(addr.group)) {
             this._decodeHeaderCharset({ value: addr.group }, { isAddress: true })
           }
         }
-      }.bind(this))
+      })
     }
 
     return parsed
@@ -191,7 +192,8 @@ export default class MimeNode {
    * Parses Content-Type value and selects following actions.
    */
   _processContentType () {
-    this.contentType = (this.headers['content-type'] && this.headers['content-type'][0]) || parseHeaderValue('text/plain')
+    const defaultValue = parseHeaderValue('text/plain')
+    this.contentType = pathOr(defaultValue, ['headers', 'content-type', '0'])(this)
     this.contentType.value = (this.contentType.value || '').toLowerCase().trim()
     this.contentType.type = (this.contentType.value.split('/').shift() || 'text')
 
@@ -206,15 +208,15 @@ export default class MimeNode {
     }
 
     if (this.contentType.value === 'message/rfc822') {
-    /**
-     * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
-     * otherwise treat it like a regular attachment
-     */
-      const contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
+      /**
+       * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
+       * otherwise treat it like a regular attachment
+       */
+      const defaultValue = parseHeaderValue('')
+      const contentDisposition = pathOr(defaultValue, ['headers', 'content-disposition', '0'])(this)
       if ((contentDisposition.value || '').toLowerCase().trim() !== 'attachment') {
-        this.childNodes = []
         this._currentChild = new MimeNode(this)
-        this.childNodes.push(this._currentChild)
+        this.childNodes = [this._currentChild]
         this._isRfc822 = true
       }
     }
@@ -225,8 +227,9 @@ export default class MimeNode {
    * before it can be emitted
    */
   _processContentTransferEncoding () {
-    this.contentTransferEncoding = (this.headers['content-transfer-encoding'] && this.headers['content-transfer-encoding'][0]) || parseHeaderValue('7bit')
-    this.contentTransferEncoding.value = (this.contentTransferEncoding.value || '').toLowerCase().trim()
+    const defaultValue = parseHeaderValue('7bit')
+    this.contentTransferEncoding = pathOr(defaultValue, ['headers', 'content-transfer-encoding', '0'])(this)
+    this.contentTransferEncoding.value = pathOr('', ['contentTransferEncoding', 'value'])(this).toLowerCase().trim()
   }
 
   /**
@@ -255,7 +258,7 @@ export default class MimeNode {
       } else if (this._currentChild) {
         this._currentChild.writeLine(line)
       } else {
-            // Ignore multipart preamble
+        // Ignore multipart preamble
       }
     } else if (this._isRfc822) {
       this._currentChild.writeLine(line)
@@ -301,45 +304,41 @@ export default class MimeNode {
 
   /**
    * Emits a chunk of the body
-   *
-   * @param {Boolean} forceEmit If set to true does not keep any remainders
   */
   _emitBody () {
-    const contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
-
     if (this._isMultipart || !this._bodyBuffer) {
       return
     }
 
-    // Process flowed text before emitting it
-    if (/^text\/(plain|html)$/i.test(this.contentType.value) && this.contentType.params && /^flowed$/i.test(this.contentType.params.format)) {
-      const delSp = /^yes$/i.test(this.contentType.params.delsp)
-
-      this._bodyBuffer = this._bodyBuffer
-        .split('\n')
-        // remove soft linebreaks
-        // soft linebreaks are added after space symbols
-        .reduce(function (previousValue, currentValue) {
-          let body = previousValue
-          if (delSp) {
-            // delsp adds spaces to text to be able to fold it
-            // these spaces can be removed once the text is unfolded
-            body = body.replace(/[ ]+$/, '')
-          }
-          if (/ $/.test(previousValue) && !/(^|\n)-- $/.test(previousValue)) {
-            return body + currentValue
-          } else {
-            return body + '\n' + currentValue
-          }
-        })
-        // remove whitespace stuffing
-        // http://tools.ietf.org/html/rfc3676#section-4.4
-        .replace(/^ /gm, '')
-    }
-
+    this._processFlowedText()
     this.content = str2arr(this._bodyBuffer)
+    this._processHtmlText()
+    this._bodyBuffer = ''
+  }
 
-    if (/^text\/(plain|html)$/i.test(this.contentType.value) && !/^attachment$/i.test(contentDisposition.value)) {
+  _processFlowedText () {
+    const isText = /^text\/(plain|html)$/i.test(this.contentType.value)
+    const isFlowed = /^flowed$/i.test(pathOr('', ['contentType', 'params', 'format'])(this))
+    if (!isText || !isFlowed) return
+
+    const delSp = /^yes$/i.test(this.contentType.params.delsp)
+    this._bodyBuffer = this._bodyBuffer.split('\n')
+      .reduce(function (previousValue, currentValue) {
+        // remove soft linebreaks after space symbols.
+        // delsp adds spaces to text to be able to fold it.
+        // these spaces can be removed once the text is unfolded
+        const endsWithSpace = / $/.test(previousValue)
+        const isBoundary = /(^|\n)-- $/.test(previousValue)
+        return (delSp ? previousValue.replace(/[ ]+$/, '') : previousValue) + ((endsWithSpace && !isBoundary) ? '' : '\n') + currentValue
+      })
+      .replace(/^ /gm, '') // remove whitespace stuffing http://tools.ietf.org/html/rfc3676#section-4.4
+  }
+
+  _processHtmlText () {
+    const contentDisposition = (this.headers['content-disposition'] && this.headers['content-disposition'][0]) || parseHeaderValue('')
+    const isHtml = /^text\/(plain|html)$/i.test(this.contentType.value)
+    const isAttachment = /^attachment$/i.test(contentDisposition.value)
+    if (isHtml && !isAttachment) {
       if (!this.charset && /^text\/html$/i.test(this.contentType.value)) {
         this.charset = this._detectHTMLCharset(this._bodyBuffer)
       }
@@ -352,7 +351,6 @@ export default class MimeNode {
       // override charset for text nodes
       this.charset = this.contentType.params.charset = 'utf-8'
     }
-    this._bodyBuffer = ''
   }
 
   /**
@@ -377,7 +375,8 @@ export default class MimeNode {
       }
     }
 
-    if (!charset && (meta = html.match(/<meta\s+charset=["'\s]*([^"'<>/\s]+)/i))) {
+    meta = html.match(/<meta\s+charset=["'\s]*([^"'<>/\s]+)/i)
+    if (!charset && meta) {
       charset = (meta[1] || '').trim().toLowerCase()
     }
 
