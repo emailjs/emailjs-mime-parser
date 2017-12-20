@@ -336,6 +336,17 @@ describe('MimeNode tests', function () {
       expect(writeLineStub.withArgs('abc').callCount).to.equal(1)
     })
 
+    it('should process non-utf8 base64 data and emit binary string', function () {
+      node.contentTransferEncoding = {
+        value: 'base64'
+      }
+
+      node._lineRemainder = ''
+      node._processBodyLine('4pSB4pSB4pSB4pSB4pSB4pSB4pSB4pSB4pSBCuacrOODoeODvOODq+OBr+OAgeODnuOCpOODiuOD')
+
+      expect(node._bodyBuffer).to.equal('━━━━━━━━━\n本メールは、マイナ�')
+    })
+
     it('should process base64 data', function () {
       node.contentTransferEncoding = {
         value: 'base64'
