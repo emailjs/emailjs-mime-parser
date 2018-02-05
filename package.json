@@ -33,7 +33,7 @@
     "mocha": "^5.0.0",
     "nodemon": "^1.12.1",
     "pre-commit": "^1.2.2",
-    "sinon": "^4.1.2",
+    "sinon": "^4.2.2",
     "standard": "^10.0.3",
     "text-encoding": "^0.6.4"
   },
