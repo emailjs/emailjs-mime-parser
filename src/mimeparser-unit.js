@@ -250,4 +250,32 @@ describe('message tests', function () {
     expect(root.childNodes).to.not.be.empty
     expect(root.bodystructure).to.equal(expectedBodystructure)
   })
+
+  it('should decode S/MIME', () => {
+    const testHeader = 'Content-Type: application/pkcs7-mime; name=smime.p7m; smime-type=enveloped-data; charset=binary\r\n' +
+      'Content-Description: Enveloped Data\r\n' +
+      'Content-Disposition: attachment; filename=smime.p7m\r\n' +
+      'Content-Transfer-Encoding: base64\r\n' +
+      'From: sender@example.com\r\n' +
+      'To: recipient@example.com\r\n' +
+      'Subject: Example S/MIME encrypted message\r\n' +
+      'Date: Sun, 25 Feb 2018 09:28:14 +0000\r\n' +
+      'Message-Id: <1519550894482-b208bdc8-7f8e90aa-4af6b4fa@example.com>\r\n' +
+      'MIME-Version: 1.0\r\n' +
+      '\r\n'
+
+    const testMessage = 'MIIB3AYJKoZIhvcNAQcDoIIBzTCCAckCAQIxggFuMIIBagIBADAjMB4xHDAJBgNVBAYTAlJVMA8G\r\n' +
+      'A1UEAx4IAFQAZQBzAHQCAQEwPAYJKoZIhvcNAQEHMC+gDzANBglghkgBZQMEAgMFAKEcMBoGCSqG\r\n' +
+      'SIb3DQEBCDANBglghkgBZQMEAgMFAASCAQBDyepahKyM+hceeF7J+pyiSVYLElKyFKff9flMs1VX\r\n' +
+      'ZaBQRcEYpIqw9agD4u+aHlIOJ6AtdCbxaV0M8q6gjM4E5lUFUOqG/QIycdG2asZ0lza/DL8SdxfA\r\n' +
+      '3WE9Ij5IEqFbtnykbfORK+5XWT0nYs/OMN0NKeCwXjElNsezX9IAIgxHgwcVYW+szXpRlarjriAC\r\n' +
+      'TDG/M+Xl5YtyAhmHWFncBSfWM8e2q+AKh3eCal1lH4eXtGICc4rad4f6845YJwXL8DYYS+GdLVAY\r\n' +
+      'EXKuHr0N7g4aHTs9B8EQqHmYdaHWTi3h0ZPkvAE+wwfm9xjvL2z2HrfpYyMTvALrefvSt7sGMIAG\r\n' +
+      'CSqGSIb3DQEHATAdBglghkgBZQMEAQIEEKt6VqFcNz/VYFwu85DTOqGggAQgIHc45LBiYIQqhxNw\r\n' +
+      'hlRk4BxMiyiQRdLcVdCwwkKyX2sAAAAA\r\n'
+
+    const expectedText = (Buffer.from(testMessage, 'base64')).toString('hex').toUpperCase()
+    const root = parse(testHeader + testMessage)
+    expect((Buffer.from(root.content.buffer)).toString('hex').toUpperCase()).to.deep.equal(expectedText)
+  })
 })
