@@ -1,6 +1,6 @@
 {
   "name": "emailjs-mime-parser",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "homepage": "https://github.com/emailjs/emailjs-mime-parser",
   "description": "Parse a mime tree, no magic included.",
   "author": "Andris Reinman <andris@kreata.ee>",
@@ -23,7 +23,7 @@
   "main": "dist/mimeparser",
   "dependencies": {
     "emailjs-addressparser": "^2.0.1",
-    "emailjs-mime-codec": "^2.0.6",
+    "emailjs-mime-codec": "^2.0.7",
     "ramda": "^0.25.0"
   },
   "devDependencies": {
