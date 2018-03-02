@@ -1,6 +1,6 @@
 {
   "name": "emailjs-mime-parser",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "homepage": "https://github.com/emailjs/emailjs-mime-parser",
   "description": "Parse a mime tree, no magic included.",
   "author": "Andris Reinman <andris@kreata.ee>",
@@ -27,6 +27,7 @@
     "ramda": "^0.25.0"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-register": "^6.26.0",
     "chai": "^4.1.2",
