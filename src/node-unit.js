@@ -444,7 +444,7 @@ describe('MimeNode tests', function () {
         params: {}
       }
       node.charset = 'utf-8'
-      var str = node._bodyBuffer = 'Спасибо'
+      node._bodyBuffer = 'Спасибо'
       node._emitBody()
 
       expect(node.content).to.deep.equal(new Uint8Array([0xD0, 0xA1, 0xD0, 0xBF, 0xD0, 0xB0, 0xD1, 0x81, 0xD0, 0xB8, 0xD0, 0xB1, 0xD0, 0xBE]))
