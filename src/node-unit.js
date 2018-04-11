@@ -437,6 +437,18 @@ describe('MimeNode tests', function () {
       expect(node.content).to.deep.equal(new Uint8Array([0xC5, 0xBE, 0xC5, 0xA1]))
       expect(node.charset).to.equal('utf-8')
     })
+
+    it('should properly convert multibyte characters', function () {
+      node.contentType = {
+        value: 'text/html',
+        params: {}
+      }
+      node.charset = 'utf-8'
+      var str = node._bodyBuffer = 'Спасибо'
+      node._emitBody()
+
+      expect(node.content).to.deep.equal(new Uint8Array([0xD0, 0xA1, 0xD0, 0xBF, 0xD0, 0xB0, 0xD1, 0x81, 0xD0, 0xB8, 0xD0, 0xB1, 0xD0, 0xBE]))
+    })
   })
 
   describe('#_detectHTMLCharset', function () {

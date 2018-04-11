@@ -1,6 +1,6 @@
 import { pathOr } from 'ramda'
 import timezone from './timezones'
-import { decode, base64Decode, convert, parseHeaderValue, mimeWordsDecode } from 'emailjs-mime-codec'
+import { encode, decode, base64Decode, convert, parseHeaderValue, mimeWordsDecode } from 'emailjs-mime-codec'
 import parseAddress from 'emailjs-addressparser'
 
 export default class MimeNode {
@@ -310,7 +310,7 @@ export default class MimeNode {
     }
 
     this._processFlowedText()
-    this.content = str2arr(this._bodyBuffer)
+    this.content = (/^utf/i.test(this.charset) ? encode : str2arr)(this._bodyBuffer)
     this._processHtmlText()
     this._bodyBuffer = ''
   }
