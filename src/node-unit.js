@@ -343,8 +343,27 @@ describe('MimeNode tests', function () {
 
       node._lineRemainder = ''
       node._processBodyLine('4pSB4pSB4pSB4pSB4pSB4pSB4pSB4pSB4pSBCuacrOODoeODvOODq+OBr+OAgeODnuOCpOODiuOD')
+      node._processTrailingBytes()
 
       expect(node._bodyBuffer).to.equal('━━━━━━━━━\n本メールは、マイナ�')
+    })
+
+    it('should process line interrupted in the middle of char', function () {
+      node.contentTransferEncoding = {
+        value: 'base64'
+      }
+
+      node._lineRemainder = ''
+      node._processBodyLine('0LbQsNC50YjQtdC1INCy0YDQtdC80Y8uDQrQmtCw0Log0YLQvtC70YzQutC+INCy0YvRgdCy0L7Q')
+
+      var str = 'жайшее время.\r\nКак только высво'
+      expect(node._bodyBuffer).to.equal(str)
+
+      node._processBodyLine('sdC+0LTQuNC8INGA0LXRgdGD0YDRgSDQv9GA0L7Qs9GA0LDQvNC80LjRgdGC0L7QsiDQv9C+0YHR')
+      node._processTrailingBytes()
+
+      str += 'бодим ресурс программистов пос�'
+      expect(node._bodyBuffer).to.equal(str)
     })
 
     it('should process base64 data', function () {

@@ -274,7 +274,9 @@ export default class MimeNode {
           }
 
           if (curLine.length) {
-            this._bodyBuffer += base64Decode(curLine, this.charset)
+            let {result, decoder} = base64Decode(curLine, this.charset, this._decoder, true)
+            this._bodyBuffer += result
+            this._decoder = decoder
           }
 
           break
@@ -303,16 +305,24 @@ export default class MimeNode {
 
   /**
    * Emits a chunk of the body
-  */
+   */
   _emitBody () {
     if (this._isMultipart || !this._bodyBuffer) {
       return
     }
 
+    this._processTrailingBytes()
     this._processFlowedText()
     this.content = str2arr(this._bodyBuffer)
     this._processHtmlText()
     this._bodyBuffer = ''
+  }
+
+  _processTrailingBytes () {
+    if (!this._decoder) return
+
+    this._bodyBuffer += base64Decode('', this.charset, this._decoder).result
+    delete this._decoder
   }
 
   _processFlowedText () {
