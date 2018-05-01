@@ -11,7 +11,7 @@ npm install --save emailjs-mime-parser
 ```
 
 ```javascript
-import parse from 'emailjs-mime-parse'
+import parse from 'emailjs-mime-parser'
 
 parse(String) -> MimeNode
 ```
