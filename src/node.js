@@ -206,18 +206,27 @@ export default class MimeNode {
       this._multipartBoundary = this.contentType.params.boundary
     }
 
-    if (this.contentType.value === 'message/rfc822') {
+    /**
+     * For attachment (inline/regular) if charset is not defined and attachment is non-text/*,
+     * then default charset to binary.
+     * Refer to issue: https://github.com/emailjs/emailjs-mime-parser/issues/18
+     */
+    const defaultContentDispositionValue = parseHeaderValue('')
+    const contentDisposition = pathOr(defaultContentDispositionValue, ['headers', 'content-disposition', '0'])(this)
+    const isAttachment = (contentDisposition.value || '').toLowerCase().trim() === 'attachment'
+    const isInlineAttachment = (contentDisposition.value || '').toLowerCase().trim() === 'inline'
+    if ((isAttachment || isInlineAttachment) && this.contentType.type !== 'text' && !this.charset) {
+      this.charset = 'binary'
+    }
+
+    if (this.contentType.value === 'message/rfc822' && !isAttachment) {
       /**
        * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
        * otherwise treat it like a regular attachment
        */
-      const defaultValue = parseHeaderValue('')
-      const contentDisposition = pathOr(defaultValue, ['headers', 'content-disposition', '0'])(this)
-      if ((contentDisposition.value || '').toLowerCase().trim() !== 'attachment') {
-        this._currentChild = new MimeNode(this)
-        this.childNodes = [this._currentChild]
-        this._isRfc822 = true
-      }
+      this._currentChild = new MimeNode(this)
+      this.childNodes = [this._currentChild]
+      this._isRfc822 = true
     }
   }
 

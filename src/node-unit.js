@@ -255,6 +255,108 @@ describe('MimeNode tests', function () {
       expect(node._isMultipart).to.equal('mixed')
       expect(node._multipartBoundary).to.equal('zzzz')
     })
+
+    it('should set charset to binary for attachment when there is no charset', function () {
+      node.headers['content-type'] = [{
+        value: 'application/pdf'
+      }]
+
+      node.headers['content-disposition'] = [{
+        value: 'attachment'
+      }]
+
+      node._processContentType()
+
+      expect(node.contentType).to.deep.equal({
+        value: 'application/pdf',
+        type: 'application'
+      })
+      expect(node.charset).to.equal('binary')
+    })
+
+    it('should set charset to binary for inline attachment when there is no charset', function () {
+      node.headers['content-type'] = [{
+        value: 'image/png'
+      }]
+
+      node.headers['content-disposition'] = [{
+        value: 'inline'
+      }]
+
+      node._processContentType()
+
+      expect(node.contentType).to.deep.equal({
+        value: 'image/png',
+        type: 'image'
+      })
+      expect(node.charset).to.equal('binary')
+    })
+
+    it('should not set charset to binary for inline attachment when there is a charset', function () {
+      node.headers['content-type'] = [{
+        value: 'image/png',
+        params: {
+          charset: 'US-ASCII'
+        }
+      }]
+
+      node.headers['content-disposition'] = [{
+        value: 'inline'
+      }]
+
+      node._processContentType()
+
+      expect(node.contentType).to.deep.equal({
+        value: 'image/png',
+        type: 'image',
+        params: {
+          charset: 'US-ASCII'
+        }
+      })
+      expect(node.charset).to.equal('US-ASCII')
+    })
+
+    it('should not set charset to binary for text/* attachment when there is no charset', function () {
+      node.headers['content-type'] = [{
+        value: 'text/plain'
+      }]
+
+      node.headers['content-disposition'] = [{
+        value: 'attachment'
+      }]
+
+      node._processContentType()
+
+      expect(node.contentType).to.deep.equal({
+        value: 'text/plain',
+        type: 'text'
+      })
+      expect(node.charset).to.be.undefined
+    })
+
+    it('should not set charset to binary for text/* attachment when there is a charset', function () {
+      node.headers['content-type'] = [{
+        value: 'text/plain',
+        params: {
+          charset: 'US-ASCII'
+        }
+      }]
+
+      node.headers['content-disposition'] = [{
+        value: 'attachment'
+      }]
+
+      node._processContentType()
+
+      expect(node.contentType).to.deep.equal({
+        value: 'text/plain',
+        type: 'text',
+        params: {
+          charset: 'US-ASCII'
+        }
+      })
+      expect(node.charset).to.equal('US-ASCII')
+    })
   })
 
   describe('#_processContentTransferEncoding', function () {
