@@ -272,7 +272,7 @@ export default class MimeNode {
       this._currentChild.writeLine(line)
     } else {
       switch (this.contentTransferEncoding.value) {
-        case 'base64':
+        case 'base64': {
           let curLine = this._lineRemainder + line.trim()
 
           if (curLine.length % 4) {
@@ -287,8 +287,9 @@ export default class MimeNode {
           }
 
           break
-        case 'quoted-printable':
-          curLine = this._lineRemainder + (this._lineCount > 1 ? '\n' : '') + line
+        }
+        case 'quoted-printable': {
+          let curLine = this._lineRemainder + (this._lineCount > 1 ? '\n' : '') + line
           const match = curLine.match(/=[a-f0-9]{0,1}$/i)
           if (match) {
             this._lineRemainder = match[0]
@@ -301,6 +302,7 @@ export default class MimeNode {
             return String.fromCharCode(parseInt(code, 16))
           })
           break
+        }
         case '7bit':
         case '8bit':
         default:
