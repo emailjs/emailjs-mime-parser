@@ -118,6 +118,23 @@ describe('message tests', function () {
     })
   })
 
+  it('should parse UTF-8 encoded body with Base64 transfer encoding', function () {
+    var fixture = 'Mime-Version: 1.0\r\n' +
+    'Content-Type: text/plain; charset=UTF-8\r\n' +
+    'Content-Transfer-Encoding: base64\r\n' +
+    '\r\n' +
+    'CuKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKU\r\n' +
+    'geKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKUgeKU\r\n' +
+    'geKUgeKUgQoK44CA44CA44CA44CA44CA44CA44CAWWFob28h44Kr44O844OJ\r\n' +
+    '44CA44GK44GZ44GZ44KB5oOF5aCx44Oh44O844Or\r\n'
+    const root = parse(fixture)
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal(
+      '\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+      '\n' +
+      '　　　　　　　Yahoo!カード　おすすめ情報メール')
+  })
+
   it('should decode plaintext body from latin-1 charset', function () {
     var fixture = 'Content-Type: text/plain; charset="latin_1"\r\n' +
       'Content-Transfer-Encoding: quoted-printable\r\n' +

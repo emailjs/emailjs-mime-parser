@@ -1,6 +1,7 @@
 import { pathOr } from 'ramda'
 import timezone from './timezones'
-import { decode, base64Decode, convert, parseHeaderValue, mimeWordsDecode } from 'emailjs-mime-codec'
+import { decode, convert, parseHeaderValue, mimeWordsDecode } from 'emailjs-mime-codec'
+import { decode as decodeBase64 } from 'emailjs-base64'
 import parseAddress from 'emailjs-addressparser'
 
 export default class MimeNode {
@@ -283,7 +284,7 @@ export default class MimeNode {
           }
 
           if (curLine.length) {
-            this._bodyBuffer += base64Decode(curLine, this.charset)
+            this._bodyBuffer += decodeBase64(curLine)
           }
 
           break
