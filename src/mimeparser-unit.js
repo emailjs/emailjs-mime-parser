@@ -460,3 +460,19 @@ describe('MimeNode', function () {
     })
   })
 })
+
+describe.only('DOS', () => {
+  it('should be resilient to memory exhaustion', () => {
+    let payload = '' +
+      'Content-Type: multipart/mixed; boundary="0"\r\n' +
+      '\r\n'
+
+    let counter = 99999
+    const attack = []
+    while (counter--) {
+      attack.push('--0\r\n\r\n')
+    }
+    payload += attack.join('\r\n') + '\r\n'
+    const root = parse(payload)
+  })
+})
