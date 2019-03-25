@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 
-import parse, { MimeNode } from './mimeparser'
+import parse, { MimeNode, NodeCounter } from './mimeparser'
 import { TextDecoder } from 'text-encoding'
 
 describe('Header parsing', () => {
@@ -254,6 +254,16 @@ describe('Message parsing', function () {
     const root = parse(testHeader + testMessage)
     expect((Buffer.from(root.content.buffer)).toString('hex').toUpperCase()).to.deep.equal(expectedText)
   })
+
+  it('should be resilient to memory exhaustion attack', () => {
+    let numberOfMimeNodes = 9999
+    const attackPayload = []
+    while (numberOfMimeNodes--) {
+      attackPayload.push('--0\r\n\r\n\r\n')
+    }
+    const fixture = 'Content-Type: multipart/mixed; boundary="0"\r\n\r\n' + attackPayload.join('')
+    expect(() => parse(fixture)).to.throw('Maximum number of MIME nodes exceeded!')
+  })
 })
 
 describe('Bodystructure', () => {
@@ -458,5 +468,16 @@ describe('MimeNode', function () {
       })
       expect(node.charset).to.equal('US-ASCII')
     })
+  })
+})
+
+describe('NodeCounter', () => {
+  it('should throw at the 1000th invocation', () => {
+    let invocations = 999
+    const nodeCounter = new NodeCounter()
+    while (invocations--) {
+      expect(() => nodeCounter.bump()).to.not.throw()
+    }
+    expect(() => nodeCounter.bump()).to.throw()
   })
 })

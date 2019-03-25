@@ -4,8 +4,24 @@ import { decode, base64Decode, convert, parseHeaderValue, mimeWordsDecode } from
 import { TextEncoder } from 'text-encoding'
 import parseAddress from 'emailjs-addressparser'
 
+/*
+ * Counts MIME nodes to prevent memory exhaustion attacks (CWE-400)
+ * see: https://snyk.io/vuln/npm:emailjs-mime-parser:20180625
+ */
+const MAXIMUM_NUMBER_OF_MIME_NODES = 999
+export class NodeCounter {
+  constructor () {
+    this.count = 0
+  }
+  bump () {
+    if (++this.count > MAXIMUM_NUMBER_OF_MIME_NODES) {
+      throw new Error('Maximum number of MIME nodes exceeded!')
+    }
+  }
+}
+
 export default function parse (chunk) {
-  const root = new MimeNode()
+  const root = new MimeNode(new NodeCounter())
   const lines = (typeof chunk === 'object' ? String.fromCharCode.apply(null, chunk) : chunk).split(/\r?\n/g)
   lines.forEach(line => root.writeLine(line))
   root.finalize()
@@ -13,7 +29,10 @@ export default function parse (chunk) {
 }
 
 export class MimeNode {
-  constructor () {
+  constructor (nodeCounter = new NodeCounter()) {
+    this.nodeCounter = nodeCounter
+    this.nodeCounter.bump()
+
     this.header = [] // An array of unfolded header lines
     this.headers = {} // An object that holds header key=value pairs
     this.bodystructure = ''
@@ -247,7 +266,7 @@ export class MimeNode {
        * Parse message/rfc822 only if the mime part is not marked with content-disposition: attachment,
        * otherwise treat it like a regular attachment
        */
-      this._currentChild = new MimeNode(this)
+      this._currentChild = new MimeNode(this.nodeCounter)
       this.childNodes = [this._currentChild]
       this._isRfc822 = true
     }
@@ -276,7 +295,7 @@ export class MimeNode {
         if (this._currentChild) {
           this._currentChild.finalize()
         }
-        this._currentChild = new MimeNode(this)
+        this._currentChild = new MimeNode(this.nodeCounter)
         this.childNodes.push(this._currentChild)
       } else if (line === '--' + this._multipartBoundary + '--') {
         this.bodystructure += line + '\n'
