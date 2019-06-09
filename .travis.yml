@@ -1,9 +1,19 @@
 language: node_js
 sudo: false
 node_js:
-  - lts/*
+- lts/*
 notifications:
   email:
     recipients:
-      - felix.hammerl@gmail.com
-      - andris.reinman@gmail.com
+    - felix.hammerl@gmail.com
+script:
+- npm test
+deploy:
+  provider: npm
+  email: felix.hammerl+emailjs-deployment-user@gmail.com
+  api_key:
+    secure: Miz/qgi5CTT/VhvfJTJY6SIy1qmWQxLCAeiPkXDYfzhOqXwpBA3bMwilqeyiuQr0QvEUWYQaR58rZ/krl890M5e8lcqUB8S2qoKMeX/gqNSp7yOapk9nynCVUVZoLvGxm74vFI1A8lL19lCGxYBylf+bCx57wkdiiBMhnPBjrNQ=
+  on:
+    tags: true
+    all_branches: true
+    condition: "$TRAVIS_TAG =~ ^v[0-9]+\\.[0-9]+\\.[0-9]+"
