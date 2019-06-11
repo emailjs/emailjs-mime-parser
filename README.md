@@ -1,5 +1,17 @@
 # emailjs-mime-parser
 
+## HELP WANTED
+
+Felix is not actively maintaining this library anymore. But this is the only IMAP client for JS that I am aware of, so I feel this library still has its value. Please let me know if you're interested in helping out, either via email or open an issue about that.
+
+The work that's on the horizon is:
+
+* Adding features as per requests
+* Refactor to allow streaming and cut down memory consumption
+* Stay up to date with developments in the IMAP protocol
+* Maintenance of the other related emailjs libraries
+* Maintenance and update of [emailjs.org](https://emailjs.org)
+
 [![Greenkeeper badge](https://badges.greenkeeper.io/emailjs/emailjs-mime-parser.svg)](https://greenkeeper.io/) [![Build Status](https://travis-ci.org/emailjs/emailjs-mime-parser.png?branch=master)](https://travis-ci.org/emailjs/emailjs-mime-parser) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)  [![ES6+](https://camo.githubusercontent.com/567e52200713e0f0c05a5238d91e1d096292b338/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f65732d362b2d627269676874677265656e2e737667)](https://kangax.github.io/compat-table/es6/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Parse a mime tree, no magic included. This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed.
