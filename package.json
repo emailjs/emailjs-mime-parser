@@ -24,7 +24,7 @@
   "dependencies": {
     "emailjs-addressparser": "^2.0.2",
     "emailjs-mime-codec": "^2.0.8",
-    "ramda": "^0.26.1"
+    "ramda": "^0.27.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
