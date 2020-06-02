@@ -14,7 +14,7 @@ The work that's on the horizon is:
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/emailjs/emailjs-mime-parser.svg)](https://greenkeeper.io/) [![Build Status](https://travis-ci.org/emailjs/emailjs-mime-parser.png?branch=master)](https://travis-ci.org/emailjs/emailjs-mime-parser) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)  [![ES6+](https://camo.githubusercontent.com/567e52200713e0f0c05a5238d91e1d096292b338/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f65732d362b2d627269676874677265656e2e737667)](https://kangax.github.io/compat-table/es6/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Parse a mime tree, no magic included. This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed.
+Parse a mime tree, no magic included. This is supposed to be a "low level" mime parsing module. No magic is performed on the data (eg. no joining HTML parts etc.). All body data is emitted out as Typed Arrays, so no need to perform any base64 or quoted printable decoding by yourself. Text parts are decoded to UTF-8 if needed. In addition, line terminators are preserved which permits the functionality of verifying a message signature.
 
 ## Usage
 
