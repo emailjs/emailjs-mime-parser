@@ -351,7 +351,7 @@ export class MimeNode {
           this._bodyBuffer += line + terminator
           break
         case 'quoted-printable': {
-          let curLine = this._lineRemainder + line + terminator // (this._lineCount > 1 ? '\n' : '') + line
+          let curLine = this._lineRemainder + line + terminator
           const match = curLine.match(/=[a-f0-9]{0,1}$/i)
           if (match) {
             this._lineRemainder = match[0]
@@ -365,7 +365,7 @@ export class MimeNode {
         case '7bit':
         case '8bit':
         default:
-          this._bodyBuffer += line + terminator // (this._lineCount > 1 ? '\n' : '') + line
+          this._bodyBuffer += line + terminator
           break
       }
     }
