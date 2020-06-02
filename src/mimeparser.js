@@ -395,6 +395,9 @@ export class MimeNode {
     let bodyBuffer = ''
 
     forEachLine(this._bodyBuffer, function (line, terminator) {
+      // remove soft linebreaks after space symbols.
+      // delsp adds spaces to text to be able to fold it.
+      // these spaces can be removed once the text is unfolded
       const endsWithSpace = / $/.test(line)
       const isBoundary = /(^|\n)-- $/.test(line)
 
