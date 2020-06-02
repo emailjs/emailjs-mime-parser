@@ -20,9 +20,7 @@ export class NodeCounter {
   }
 }
 
-export default function parse (chunk) {
-  const root = new MimeNode(new NodeCounter())
-  const str = typeof chunk === 'string' ? chunk : String.fromCharCode.apply(null, chunk)
+function forEachLine (str, callback) {
   let line = ''
   let terminator = ''
   for (var i = 0; i < str.length; i += 1) {
@@ -30,18 +28,17 @@ export default function parse (chunk) {
     if (char === '\r' || char === '\n') {
       const nextChar = str[i + 1]
       terminator += char
-      // Detect single-character terminators, like Linux.
-      if (terminator === nextChar) {
-        root.writeLine(line, terminator)
-        line = ''
-        terminator = ''
-      }
       // Detect Windows and Macintosh line terminators.
-      else if ((terminator + nextChar) === '\r\n' || (terminator + nextChar) === '\n\r') {
-        root.writeLine(line, terminator + nextChar)
+      if ((terminator + nextChar) === '\r\n' || (terminator + nextChar) === '\n\r') {
+        callback(line, terminator + nextChar)
         line = ''
         terminator = ''
         i += 1
+      // Detect single-character terminators, like Linux or other system.
+      } else if (terminator === '\n' || terminator === '\r') {
+        callback(line, terminator)
+        line = ''
+        terminator = ''
       }
     } else {
       line += char
@@ -49,8 +46,16 @@ export default function parse (chunk) {
   }
   // Flush the line and terminator values if necessary; handle edge cases where MIME is generated without last line terminator.
   if (line !== '' || terminator !== '') {
-    root.writeLine(line, terminator)
+    callback(line, terminator)
   }
+}
+
+export default function parse (chunk) {
+  const root = new MimeNode(new NodeCounter())
+  const str = typeof chunk === 'string' ? chunk : String.fromCharCode.apply(null, chunk)
+  forEachLine(str, function (line, terminator) {
+    root.writeLine(line, terminator)
+  })
   root.finalize()
   return root
 }
@@ -77,7 +82,7 @@ export class MimeNode {
   }
 
   writeLine (line, terminator) {
-    this.raw += line + (terminator ? terminator : '\n')
+    this.raw += line + (terminator || '\n')
 
     if (this._state === 'HEADER') {
       this._processHeaderLine(line)
@@ -343,10 +348,10 @@ export class MimeNode {
 
       switch (this.contentTransferEncoding.value) {
         case 'base64':
-          this._bodyBuffer += line
+          this._bodyBuffer += line + terminator
           break
         case 'quoted-printable': {
-          let curLine = this._lineRemainder + (this._lineCount > 1 ? '\n' : '') + line
+          let curLine = this._lineRemainder + line + terminator // (this._lineCount > 1 ? '\n' : '') + line
           const match = curLine.match(/=[a-f0-9]{0,1}$/i)
           if (match) {
             this._lineRemainder = match[0]
@@ -360,7 +365,7 @@ export class MimeNode {
         case '7bit':
         case '8bit':
         default:
-          this._bodyBuffer += (this._lineCount > 1 ? '\n' : '') + line
+          this._bodyBuffer += line + terminator // (this._lineCount > 1 ? '\n' : '') + line
           break
       }
     }
@@ -387,16 +392,16 @@ export class MimeNode {
     if (!isText || !isFlowed) return
 
     const delSp = /^yes$/i.test(this.contentType.params.delsp)
-    this._bodyBuffer = this._bodyBuffer.split('\n')
-      .reduce(function (previousValue, currentValue) {
-        // remove soft linebreaks after space symbols.
-        // delsp adds spaces to text to be able to fold it.
-        // these spaces can be removed once the text is unfolded
-        const endsWithSpace = / $/.test(previousValue)
-        const isBoundary = /(^|\n)-- $/.test(previousValue)
-        return (delSp ? previousValue.replace(/[ ]+$/, '') : previousValue) + ((endsWithSpace && !isBoundary) ? '' : '\n') + currentValue
-      })
-      .replace(/^ /gm, '') // remove whitespace stuffing http://tools.ietf.org/html/rfc3676#section-4.4
+    let bodyBuffer = ''
+
+    forEachLine(this._bodyBuffer, function (line, terminator) {
+      const endsWithSpace = / $/.test(line)
+      const isBoundary = /(^|\n)-- $/.test(line)
+
+      bodyBuffer += (delSp ? line.replace(/[ ]+$/, '') : line) + ((endsWithSpace && !isBoundary) ? '' : terminator)
+    })
+
+    this._bodyBuffer = bodyBuffer.replace(/^ /gm, '') // remove whitespace stuffing http://tools.ietf.org/html/rfc3676#section-4.4
   }
 
   _processHtmlText () {

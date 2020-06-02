@@ -129,7 +129,7 @@ describe('Body parsing', () => {
       'xxxx\r\n' +
       'yyyy'
     const root = parse(fixture)
-    expect(new TextDecoder('utf-8').decode(root.content)).to.equal('xxxx\nyyyy')
+    expect(new TextDecoder('utf-8').decode(root.content)).to.equal('xxxx\r\nyyyy')
   })
 
   it('should decode utf-8 base64', function () {
@@ -206,14 +206,14 @@ describe('Body parsing', () => {
       var fixture = 'Content-Type: text/plain; format=flowed\r\n\r\nFirst line.\r\nSecond line.\r\n'
 
       const root = parse(fixture)
-      expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First line.\nSecond line.\n')
+      expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First line.\r\nSecond line.\r\n')
     })
 
     it('should parse format=fixed text', function () {
       var fixture = 'Content-Type: text/plain; format=fixed\r\n\r\nFirst line \r\ncontinued \r\nand so on'
 
       const root = parse(fixture)
-      expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First line \ncontinued \nand so on')
+      expect(new TextDecoder('utf-8').decode(root.content)).to.equal('First line \r\ncontinued \r\nand so on')
     })
 
     it('should parse delsp=yes text', function () {
@@ -238,7 +238,7 @@ describe('Message parsing', function () {
       'Open Whiteout Mail: https://chrome.google.com/webstore/detail/jjgghafhamhol=\r\n' +
       'jigjoghcfcekhkonijg\r\n' +
       '\r\n'
-    var expectedText = '\nHi,\n\nthis is a private conversation. To read my encrypted message below, simply open it in Whiteout Mail.\nOpen Whiteout Mail: https://chrome.google.com/webstore/detail/jjgghafhamholjigjoghcfcekhkonijg\n\n'
+    var expectedText = '\r\nHi,\r\n\r\nthis is a private conversation. To read my encrypted message below, simply open it in Whiteout Mail.\r\nOpen Whiteout Mail: https://chrome.google.com/webstore/detail/jjgghafhamholjigjoghcfcekhkonijg\r\n\r\n'
 
     const root = parse(fixture)
     expect(new TextDecoder('utf-8').decode(root.content)).to.equal(expectedText)
