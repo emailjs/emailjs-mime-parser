@@ -22,8 +22,35 @@ export class NodeCounter {
 
 export default function parse (chunk) {
   const root = new MimeNode(new NodeCounter())
-  const lines = (typeof chunk === 'object' ? String.fromCharCode.apply(null, chunk) : chunk).split(/\r?\n/g)
-  lines.forEach(line => root.writeLine(line))
+  const str = typeof chunk === 'string' ? chunk : String.fromCharCode.apply(null, chunk)
+  let line = ''
+  let terminator = ''
+  for (var i = 0; i < str.length; i += 1) {
+    const char = str[i]
+    if (char === '\r' || char === '\n') {
+      const nextChar = str[i + 1]
+      terminator += char
+      // Detect single-character terminators, like Linux.
+      if (terminator === nextChar) {
+        root.writeLine(line, terminator)
+        line = ''
+        terminator = ''
+      }
+      // Detect Windows and Macintosh line terminators.
+      else if ((terminator + nextChar) === '\r\n' || (terminator + nextChar) === '\n\r') {
+        root.writeLine(line, terminator + nextChar)
+        line = ''
+        terminator = ''
+        i += 1
+      }
+    } else {
+      line += char
+    }
+  }
+  // Flush the line and terminator values if necessary; handle edge cases where MIME is generated without last line terminator.
+  if (line !== '' || terminator !== '') {
+    root.writeLine(line, terminator)
+  }
   root.finalize()
   return root
 }
@@ -49,13 +76,13 @@ export class MimeNode {
     this._isRfc822 = false // Indicates if this is a message/rfc822 node
   }
 
-  writeLine (line) {
-    this.raw += (this.raw ? '\n' : '') + line
+  writeLine (line, terminator) {
+    this.raw += line + (terminator ? terminator : '\n')
 
     if (this._state === 'HEADER') {
       this._processHeaderLine(line)
     } else if (this._state === 'BODY') {
-      this._processBodyLine(line)
+      this._processBodyLine(line, terminator)
     }
   }
 
@@ -287,8 +314,9 @@ export class MimeNode {
    * passes line value to child nodes.
    *
    * @param {String} line Entire input line as 'binary' string
+   * @param {String} terminator The line terminator detected by parser
    */
-  _processBodyLine (line) {
+  _processBodyLine (line, terminator) {
     if (this._isMultipart) {
       if (line === '--' + this._multipartBoundary) {
         this.bodystructure += line + '\n'
@@ -304,12 +332,12 @@ export class MimeNode {
         }
         this._currentChild = false
       } else if (this._currentChild) {
-        this._currentChild.writeLine(line)
+        this._currentChild.writeLine(line, terminator)
       } else {
         // Ignore multipart preamble
       }
     } else if (this._isRfc822) {
-      this._currentChild.writeLine(line)
+      this._currentChild.writeLine(line, terminator)
     } else {
       this._lineCount++
 
