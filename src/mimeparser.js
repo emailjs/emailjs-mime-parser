@@ -20,10 +20,42 @@ export class NodeCounter {
   }
 }
 
+function forEachLine (str, callback) {
+  let line = ''
+  let terminator = ''
+  for (var i = 0; i < str.length; i += 1) {
+    const char = str[i]
+    if (char === '\r' || char === '\n') {
+      const nextChar = str[i + 1]
+      terminator += char
+      // Detect Windows and Macintosh line terminators.
+      if ((terminator + nextChar) === '\r\n' || (terminator + nextChar) === '\n\r') {
+        callback(line, terminator + nextChar)
+        line = ''
+        terminator = ''
+        i += 1
+      // Detect single-character terminators, like Linux or other system.
+      } else if (terminator === '\n' || terminator === '\r') {
+        callback(line, terminator)
+        line = ''
+        terminator = ''
+      }
+    } else {
+      line += char
+    }
+  }
+  // Flush the line and terminator values if necessary; handle edge cases where MIME is generated without last line terminator.
+  if (line !== '' || terminator !== '') {
+    callback(line, terminator)
+  }
+}
+
 export default function parse (chunk) {
   const root = new MimeNode(new NodeCounter())
-  const lines = (typeof chunk === 'object' ? String.fromCharCode.apply(null, chunk) : chunk).split(/\r?\n/g)
-  lines.forEach(line => root.writeLine(line))
+  const str = typeof chunk === 'string' ? chunk : String.fromCharCode.apply(null, chunk)
+  forEachLine(str, function (line, terminator) {
+    root.writeLine(line, terminator)
+  })
   root.finalize()
   return root
 }
@@ -49,13 +81,13 @@ export class MimeNode {
     this._isRfc822 = false // Indicates if this is a message/rfc822 node
   }
 
-  writeLine (line) {
-    this.raw += (this.raw ? '\n' : '') + line
+  writeLine (line, terminator) {
+    this.raw += line + (terminator || '\n')
 
     if (this._state === 'HEADER') {
       this._processHeaderLine(line)
     } else if (this._state === 'BODY') {
-      this._processBodyLine(line)
+      this._processBodyLine(line, terminator)
     }
   }
 
@@ -287,8 +319,9 @@ export class MimeNode {
    * passes line value to child nodes.
    *
    * @param {String} line Entire input line as 'binary' string
+   * @param {String} terminator The line terminator detected by parser
    */
-  _processBodyLine (line) {
+  _processBodyLine (line, terminator) {
     if (this._isMultipart) {
       if (line === '--' + this._multipartBoundary) {
         this.bodystructure += line + '\n'
@@ -304,21 +337,21 @@ export class MimeNode {
         }
         this._currentChild = false
       } else if (this._currentChild) {
-        this._currentChild.writeLine(line)
+        this._currentChild.writeLine(line, terminator)
       } else {
         // Ignore multipart preamble
       }
     } else if (this._isRfc822) {
-      this._currentChild.writeLine(line)
+      this._currentChild.writeLine(line, terminator)
     } else {
       this._lineCount++
 
       switch (this.contentTransferEncoding.value) {
         case 'base64':
-          this._bodyBuffer += line
+          this._bodyBuffer += line + terminator
           break
         case 'quoted-printable': {
-          let curLine = this._lineRemainder + (this._lineCount > 1 ? '\n' : '') + line
+          let curLine = this._lineRemainder + line + terminator
           const match = curLine.match(/=[a-f0-9]{0,1}$/i)
           if (match) {
             this._lineRemainder = match[0]
@@ -332,7 +365,7 @@ export class MimeNode {
         case '7bit':
         case '8bit':
         default:
-          this._bodyBuffer += (this._lineCount > 1 ? '\n' : '') + line
+          this._bodyBuffer += line + terminator
           break
       }
     }
@@ -359,16 +392,19 @@ export class MimeNode {
     if (!isText || !isFlowed) return
 
     const delSp = /^yes$/i.test(this.contentType.params.delsp)
-    this._bodyBuffer = this._bodyBuffer.split('\n')
-      .reduce(function (previousValue, currentValue) {
-        // remove soft linebreaks after space symbols.
-        // delsp adds spaces to text to be able to fold it.
-        // these spaces can be removed once the text is unfolded
-        const endsWithSpace = / $/.test(previousValue)
-        const isBoundary = /(^|\n)-- $/.test(previousValue)
-        return (delSp ? previousValue.replace(/[ ]+$/, '') : previousValue) + ((endsWithSpace && !isBoundary) ? '' : '\n') + currentValue
-      })
-      .replace(/^ /gm, '') // remove whitespace stuffing http://tools.ietf.org/html/rfc3676#section-4.4
+    let bodyBuffer = ''
+
+    forEachLine(this._bodyBuffer, function (line, terminator) {
+      // remove soft linebreaks after space symbols.
+      // delsp adds spaces to text to be able to fold it.
+      // these spaces can be removed once the text is unfolded
+      const endsWithSpace = / $/.test(line)
+      const isBoundary = /(^|\n)-- $/.test(line)
+
+      bodyBuffer += (delSp ? line.replace(/[ ]+$/, '') : line) + ((endsWithSpace && !isBoundary) ? '' : terminator)
+    })
+
+    this._bodyBuffer = bodyBuffer.replace(/^ /gm, '') // remove whitespace stuffing http://tools.ietf.org/html/rfc3676#section-4.4
   }
 
   _processHtmlText () {
