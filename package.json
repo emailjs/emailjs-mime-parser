@@ -31,7 +31,7 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-register": "^6.26.0",
     "chai": "^4.2.0",
-    "mocha": "^6.1.4",
+    "mocha": "^7.0.1",
     "nodemon": "^1.19.1",
     "pre-commit": "^1.2.2",
     "sinon": "^7.3.2",
